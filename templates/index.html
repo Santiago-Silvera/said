@@ -12,8 +12,14 @@
             text-align: center;
             background-color: #f8f9fa;
         }
-        .time-slot.active {
-            background-color: #e0f7fa;
+        .time-slot.value-1 {
+            background-color: #ffe6e6; /* Light red for 1 */
+        }
+        .time-slot.value-2 {
+            background-color: #ffcccb; /* Red for 2 */
+        }
+        .time-slot.value-3 {
+            background-color: #ff9999; /* Darker red for 3 */
         }
     </style>
 </head>
@@ -64,7 +70,16 @@
         // Cycle through preferences 0 to 3 on click
         function cyclePreference(cell) {
             let current = parseInt(cell.innerText);
-            cell.innerText = (current + 1) % 4; // Cycle between 0 and 3
+            let newValue = (current + 1) % 4; // Cycle between 0 and 3
+            cell.innerText = newValue;
+
+            // Remove previous value classes
+            cell.classList.remove('value-0', 'value-1', 'value-2', 'value-3');
+
+            // Add new value class
+            if (newValue !== 0) {
+                cell.classList.add('value-' + newValue);
+            }
         }
 
         // Prepare preferences data for submission

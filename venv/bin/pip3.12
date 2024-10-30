@@ -1,4 +1,4 @@
-#!/home/santiago/projects/simpl-txt/venv/bin/python3
+#!/home/santiago/projects/timescheduling-gui/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
