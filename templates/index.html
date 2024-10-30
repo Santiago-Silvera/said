@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Schedule with Clickable Preferences</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://unpkg.com/htmx.org@1.5.0"></script>
+    <style>
+        .time-slot {
+            cursor: pointer;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        .time-slot.active {
+            background-color: #e0f7fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h3>Select Preferences by Clicking on Time Slots</h3>
+
+        <form hx-post="/submit" hx-target="#confirmation" onsubmit="updatePreferences()">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Monday</th>
+                        <th>Tuesday</th>
+                        <th>Wednesday</th>
+                        <th>Thursday</th>
+                        <th>Friday</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for time in time_slots %}
+                    <tr>
+                        <td>{{ time }}</td>
+                        {% for day in days_of_week %}
+                        <td class="time-slot" data-time="{{ time }}" data-day="{{ day }}" onclick="cyclePreference(this)">0</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Hidden input to store preferences -->
+            <input type="hidden" name="preferences" id="hidden-preferences">
+            
+            <!-- User name and submit button -->
+            <div class="form-group">
+                <label for="name">Your Name:</label>
+                <input type="text" name="name" id="name" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-success mt-3">Submit</button>
+        </form>
+
+        <!-- Confirmation Message -->
+        <div id="confirmation" class="mt-3"></div>
+    </div>
+
+    <script>
+        // Cycle through preferences 0 to 3 on click
+        function cyclePreference(cell) {
+            let current = parseInt(cell.innerText);
+            cell.innerText = (current + 1) % 4; // Cycle between 0 and 3
+        }
+
+        // Prepare preferences data for submission
+        function updatePreferences() {
+            const preferences = {};
+
+            // Collect all cells with preference values
+            document.querySelectorAll('.time-slot').forEach(cell => {
+                const time = cell.getAttribute('data-time');
+                const day = cell.getAttribute('data-day');
+                const value = parseInt(cell.innerText);
+
+                // Initialize time slot entry if not present
+                if (!preferences[time]) {
+                    preferences[time] = {};
+                }
+                preferences[time][day] = value;
+            });
+
+            // Update hidden input with JSON-encoded preferences
+            document.getElementById('hidden-preferences').value = JSON.stringify(preferences);
+        }
+    </script>
+</body>
+</html>
