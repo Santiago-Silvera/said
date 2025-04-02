@@ -9,7 +9,7 @@ app = Flask(__name__)
 os.makedirs('responses', exist_ok=True)
 
 # Define time slots and days of the week globally
-time_slots = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"]
+time_slots = ["08:00 - 8:50", "8:50 - 9:40", "9:50 - 10:40", "10:40 - 11:30", "11:40 - 12:30", "12:30 - 13:20", "13:20 - 14:10", "14:10 - 15:00", "15:10 - 16:00"]
 days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
 @app.route('/')
