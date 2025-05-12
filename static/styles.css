@@ -1,0 +1,51 @@
+header {
+    background-color: #343a40;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+td.time-slot {
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    font-weight: bold;
+}
+
+/* Estilos por preferencia */
+.value-1 {
+    background-color: #28a745 !important;
+    color: white;
+}
+
+.value-2 {
+    background-color: #ffc107 !important;
+    color: black;
+}
+
+.value-3 {
+    background-color: #dc3545 !important;
+    color: white;
+}
+.time-slot {
+    cursor: pointer;
+    text-align: center;
+    background-color: #f8f9fa;
+}
+
+.time-slot.value-1 {
+    background-color: #ffe6e6;
+    /* Light red for 1 */
+}
+
+.time-slot.value-2 {
+    background-color: #ffcccb;
+    /* Red for 2 */
+}
+
+.time-slot.value-3 {
+    background-color: #ff9999;
+    /* Darker red for 3 */
+}

@@ -1,107 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Schedule with Clickable Preferences</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://unpkg.com/htmx.org@1.5.0"></script>
-    <style>
-        .time-slot {
-            cursor: pointer;
-            text-align: center;
-            background-color: #f8f9fa;
-        }
-        .time-slot.value-1 {
-            background-color: #ffe6e6; /* Light red for 1 */
-        }
-        .time-slot.value-2 {
-            background-color: #ffcccb; /* Red for 2 */
-        }
-        .time-slot.value-3 {
-            background-color: #ff9999; /* Darker red for 3 */
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Selección de preferencias horarias</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<script src="https://unpkg.com/htmx.org@1.5.0"></script>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
-    <div class="container mt-5">
-        <h3>Select Preferences by Clicking on Time Slots</h3>
+	<div>{{ ci }}</div>
+	<div class="container mt-5">
+		<div class="text-center mb-4">
+			<h2>Seleccione su preferencia horaria</h2>
+			<p class="lead">
+				1 = más preferido &nbsp;&nbsp;•&nbsp;&nbsp; 3 = menos preferido &nbsp;&nbsp;•&nbsp;&nbsp; 0 = no
+				disponible
+			</p>
+		</div>
 
-        <form hx-post="/submit" hx-target="#confirmation" onsubmit="updatePreferences()">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Monday</th>
-                        <th>Tuesday</th>
-                        <th>Wednesday</th>
-                        <th>Thursday</th>
-                        <th>Friday</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for time in time_slots %}
-                    <tr>
-                        <td>{{ time }}</td>
-                        {% for day in days_of_week %}
-                        <td class="time-slot" data-time="{{ time }}" data-day="{{ day }}" onclick="cyclePreference(this)">0</td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+		<form hx-post="/submit" hx-target="#confirmation" onsubmit="updatePreferences()" class="mb-4">
+			<div class="table-responsive">
+				<table class="table table-bordered table-hover text-center">
+					<thead class="thead-dark">
+						<tr>
+							<th>Hora</th>
+							{% for day in days_of_week %}
+							<th>{{ day }}</th>
+							{% endfor %}
+						</tr>
+					</thead>
+					<tbody>
+						{% for time in time_slots %}
+						<tr>
+							<td class="font-weight-bold align-middle">{{ time }}</td>
+							{% for day in days_of_week %}
+							<td class="time-slot align-middle" data-time="{{ time }}" data-day="{{ day }}"
+								onclick="cyclePreference(this)">0</td>
+							{% endfor %}
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
 
-            <!-- Hidden input to store preferences -->
-            <input type="hidden" name="preferences" id="hidden-preferences">
-            
-            <!-- User name and submit button -->
-            <div class="form-group">
-                <label for="name">Your Name:</label>
-                <input type="text" name="name" id="name" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-success mt-3">Submit</button>
-        </form>
+			<input type="hidden" name="preferences" id="hidden-preferences">
 
-        <!-- Confirmation Message -->
-        <div id="confirmation" class="mt-3"></div>
-    </div>
+			<div class="text-center">
+				<button type="submit" class="btn btn-primary btn-lg mt-3">Enviar preferencias</button>
+			</div>
+		</form>
 
-    <script>
-        // Cycle through preferences 0 to 3 on click
-        function cyclePreference(cell) {
-            let current = parseInt(cell.innerText);
-            let newValue = (current + 1) % 4; // Cycle between 0 and 3
-            cell.innerText = newValue;
+		<div id="confirmation" class="alert alert-success d-none text-center" role="alert">
+			¡Preferencias enviadas correctamente!
+		</div>
+	</div>
 
-            // Remove previous value classes
-            cell.classList.remove('value-0', 'value-1', 'value-2', 'value-3');
+	<script>
+		// Cycle through preferences 0 to 3 on click
+		function cyclePreference(cell) {
+			let current = parseInt(cell.innerText);
+			let newValue = (current + 1) % 4; // Cycle between 0 and 3
+			cell.innerText = newValue;
 
-            // Add new value class
-            if (newValue !== 0) {
-                cell.classList.add('value-' + newValue);
-            }
-        }
+			// Remove previous value classes
+			cell.classList.remove('value-0', 'value-1', 'value-2', 'value-3');
 
-        // Prepare preferences data for submission
-        function updatePreferences() {
-            const preferences = {};
+			// Add new value class
+			if (newValue !== 0) {
+				cell.classList.add('value-' + newValue);
+			}
+		}
 
-            // Collect all cells with preference values
-            document.querySelectorAll('.time-slot').forEach(cell => {
-                const time = cell.getAttribute('data-time');
-                const day = cell.getAttribute('data-day');
-                const value = parseInt(cell.innerText);
+		// Prepare preferences data for submission
+		function updatePreferences() {
+			const preferences = {};
 
-                // Initialize time slot entry if not present
-                if (!preferences[time]) {
-                    preferences[time] = {};
-                }
-                preferences[time][day] = value;
-            });
+			// Collect all cells with preference values
+			document.querySelectorAll('.time-slot').forEach(cell => {
+				const time = cell.getAttribute('data-time');
+				const day = cell.getAttribute('data-day');
+				const value = parseInt(cell.innerText);
 
-            // Update hidden input with JSON-encoded preferences
-            document.getElementById('hidden-preferences').value = JSON.stringify(preferences);
-        }
-    </script>
+				// Initialize time slot entry if not present
+				if (!preferences[time]) {
+					preferences[time] = {};
+				}
+				preferences[time][day] = value;
+			});
+
+			// Update hidden input with JSON-encoded preferences
+			document.getElementById('hidden-preferences').value = JSON.stringify(preferences);
+		}
+	</script>
 </body>
+
 </html>

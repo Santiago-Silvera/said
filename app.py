@@ -1,47 +1,97 @@
-from flask import Flask, render_template, request
-import csv
+from flask import Flask, render_template, request, redirect, session
 import os
+import jwt
 import json
+from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
+
+load_dotenv()
+SECRET_KEY = os.getenv('SECRET_KEY')
+
+# Load database URL from environment variables
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 app = Flask(__name__)
+app.secret_key = SECRET_KEY  # Needed to use Flask sessions
 
-# Ensure the responses directory exists
-os.makedirs('responses', exist_ok=True)
+# Configure SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Define time slots and days of the week globally
-time_slots = ["08:00 - 8:50", "8:50 - 9:40", "9:50 - 10:40", "10:40 - 11:30", "11:40 - 12:30", "12:30 - 13:20", "13:20 - 14:10", "14:10 - 15:00", "15:10 - 16:00"]
-days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+# Initialize the database
+db = SQLAlchemy(app)
+
+# This may need some later refactoring
+class Preference(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ci = db.Column(db.String(20), nullable=False)
+    preferences = db.Column(db.Text, nullable=False)
+
+# Update guardar_respuesta to save data to the database
+def guardar_respuesta(preferences_data, ci):
+    preferences_json = json.dumps(preferences_data)
+    new_preference = Preference(ci=ci, preferences=preferences_json)
+    db.session.add(new_preference)
+    db.session.commit()
+
+# TODO: Obtener los datos de la base de datos
+def get_time_info():
+    return ["8:00", "9:00", "10:00", "11:00", "12:00"], ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"] 
+
+time_slots, days_of_week = get_time_info()
 
 @app.route('/')
 def index():
+    # Obtener los datos del redirect
+    ip = request.remote_addr
+    print("The ip:", ip)
+
+    ci = request.args.get('ci')
+    print(ci)
+
+    hash_ = request.args.get('hash')
+    print(hash_)
+
+    user_id = session.get('user_id')
+    if user_id is None:
+        return redirect("https://www3.um.edu.uy/profesores/default.asp")
+
     # Pass time slots and days to the template
-    return render_template('index.html', time_slots=time_slots, days_of_week=days_of_week)
+    return render_template('index.html', time_slots=time_slots, days_of_week=days_of_week, ci=ci)
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    name = request.form.get('name')
     preferences = request.form.get('preferences')
+    print(preferences)
 
-    if not name or not preferences:
-        return '<p>Error: Name or preferences are missing.</p>', 400
+    if not preferences:
+        return '<p>Error: Ha ocurrido un error.</p>', 400
 
     preferences_data = json.loads(preferences)
+    ci: int = 0
 
-    # Initialize CSV with headers
-    csv_data = [["Time"] + days_of_week]
-    for time in time_slots:
-        row = [time]
-        for day in days_of_week:
-            row.append(preferences_data.get(time, {}).get(day, "0"))
-        csv_data.append(row)
+    guardar_respuesta(preferences_data, ci)
 
-    # Save to CSV file named after the user
-    csv_file_path = f'responses/{name}.csv'
-    with open(csv_file_path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(csv_data)
+    # TODO: Obtener el nombre
+    return f'<p>Confirmación: Se han guardado las preferencias horarias para Nombre!</p>', 200
 
-    return f'<p>Confirmation: Preferences saved successfully for {name}!</p>'
+@app.route('/auth')
+def handle_auth():
+    token = request.args.get('token')
+
+    if not token:
+        return "Token missing", 400
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        session['user_id']= payload.get('user_id')
+        return redirect('/preferences')
+
+    except jwt.ExpiredSignatureError:
+        return "Token expired", 401
+    except jwt.InvalidTokenError:
+        return "Invalid token", 403
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port=5000, debug=True)
+
