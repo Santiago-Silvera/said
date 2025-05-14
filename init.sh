@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# filepath: c:\Users\santi\Desktop\code\frontend-gestor-horarios\init_server.sh
-
 # Verificar si Python está instalado
-if ! command -v python &> /dev/null; then
+if ! command -v python3 &> /dev/null; then
     echo "Python no está instalado. Por favor, instálalo antes de continuar."
     exit 1
 fi
@@ -14,26 +12,34 @@ if ! command -v pip &> /dev/null; then
     exit 1
 fi
 
-# Crear un entorno virtual
-echo "Creando entorno virtual..."
-python -m venv venv
+# Verificar si existe un entorno virtual
+if [ -d ".venv" ]; then
+    echo "El entorno virtual ya existe."
+else
+    echo "Creando entorno virtual..."
+    python3 -m venv .venv
+fi
 
 # Activar el entorno virtual
-echo "Activando entorno virtual..."
-source venv/Scripts/activate  # En Windows
+echo "Activando el entorno virtual..."
+source .venv/bin/activate
 
 # Instalar dependencias
 echo "Instalando dependencias..."
 pip install -r requirements.txt
 
+# Verificar si PostgreSQL está en ejecución
+echo "Verificando si PostgreSQL está en ejecución..."
+python3 check_postgres.py
+if [ $? -ne 0 ]; then
+    echo "PostgreSQL no está en ejecución o no se puede conectar. Por favor, asegúrate de que esté en ejecución y accesible."
+    exit 1
+fi
+
 # Configurar la base de datos
-echo "Configurando la base de datos..."
-python -c "
-from app import db
-db.create_all()
-print('Base de datos configurada correctamente.')
-"
+# echo "Configurando la base de datos..."
+# python3 initialize_db.py
 
 # Iniciar el servidor
 echo "Iniciando el servidor..."
-python app.py
+python3 app.py

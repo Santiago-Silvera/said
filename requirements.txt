@@ -2,4 +2,9 @@ flask
 python-dotenv
 pyjwt
 sqlalchemy
-psycopg2
+flask_sqlalchemy
+psycopg2-binary
+
+# Added dependencies for development and database management
+gunicorn
+alembic

@@ -44,7 +44,9 @@ def get_time_info():
 
     dias = db.session.query(BloqueHorario.horario_id).distinct().all()
     dias = [d[0] for d in dias]  # Extraer los valores de los resultados
-
+    if not horarios or not dias:
+        # raise ValueError("No se encontraron horarios o días en la base de datos")
+        return ["8:00", "9:00"], ["Lunes", "Martes"]  # Valores por defecto para evitar errores
     return horarios, dias
 
 
