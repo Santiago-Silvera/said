@@ -2,10 +2,11 @@
 
 Este proyecto es una aplicación web para gestionar preferencias horarias. Los usuarios (profesores de la FIUM por el momento) pueden seleccionar sus preferencias de horarios y enviarlas para su almacenamiento en una base de datos.
 
-### Archivos principales
+## Archivos principales
 
 - **`app.py`**: Archivo principal que contiene la lógica del servidor Flask.
 - **`templates/index.html`**: Plantilla HTML para la interfaz de usuario.
+- **`templates/error.html`**: Plantilla HTML para mostrar mensajes de error.
 - **`static/styles.css`**: Archivo CSS para los estilos de la aplicación.
 - **`requirements.txt`**: Lista de dependencias necesarias para ejecutar el proyecto.
 
@@ -14,26 +15,35 @@ Este proyecto es una aplicación web para gestionar preferencias horarias. Los u
 - Python 3.7 o superior
 - [pip](https://pip.pypa.io/en/stable/)
 - PostgreSQL (para la base de datos)
+- Archivo `.env` con las siguientes variables configuradas:
+  ```properties
+  SECRET_KEY
+  POSTGRES_HOST
+  POSTGRES_PORT
+  POSTGRES_DB
+  POSTGRES_USER
+  POSTGRES_PASSWORD
+  ```
 
 ## Instalación
 
 1. Clona este repositorio:
 
+   ```bash
+   git clone https://github.com/Santiago-Silvera/frontend-gestor-horarios
+   cd frontend-gestor-horarios
+   ```
+
+2. Ejecuta el script de inicialización
+
+En caso de sistemas basados en Unix(Linux/MacOS):
+
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd frontend-gestor-horarios
+bash init.sh
 ```
 
-2. Instala las dependencias
+En caso de Windows:
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-3. Inicia el servidor Flask
-
-```bash
-python3 app.py
+.\init.bat
 ```
