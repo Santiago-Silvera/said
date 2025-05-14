@@ -26,7 +26,7 @@ source .venv/bin/activate
 
 # Instalar dependencias
 echo "Instalando dependencias..."
-pip install -r requirements.txt
+pip install -r requirements.txt -q
 
 # Verificar si PostgreSQL está en ejecución
 echo "Verificando si PostgreSQL está en ejecución..."
