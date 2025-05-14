@@ -4,7 +4,7 @@ import os
 import jwt
 from dotenv import load_dotenv
 from entities import db
-from services import guardar_respuesta, get_time_info
+from services import save_response, get_time_blocks, verify_professor, get_professor_data
 from datetime import timedelta
 
 # Load environment variables from .env file
@@ -15,6 +15,7 @@ POSTGRES_HOST = os.getenv('POSTGRES_HOST')
 POSTGRES_PORT = os.getenv('POSTGRES_PORT')
 POSTGRES_DB = os.getenv('POSTGRES_DB')
 POSTGRES_USER = os.getenv('POSTGRES_USER')
+POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 
 DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
@@ -31,46 +32,58 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-if __name__ == "__main__":
-    print("Starting the Flask app...")
-    # Wrap the get_time_info() call inside an application context
-    with app.app_context():
-        time_slots, days_of_week = get_time_info()
-
 @app.route('/preferences')
 def index():
     ci = session.get('user_id')
-    # Handle potential issues with time_slots or days_of_week
-    if not time_slots or not days_of_week:
-        return '<p>Error: Unable to load time information.</p>', 500
+    if not verify_professor(ci):
+        # Serve the error.html template for unauthenticated users
+        return render_template('error.html', message="Usuario no autenticado. Por favor, inicie sesión."), 401
 
-    return render_template('index.html', time_slots=time_slots, days_of_week=days_of_week, ci=ci)
+    professor_data = get_professor_data(ci)
+    professor_name = professor_data.get('nombre')
+
+    # Get time information
+    time_blocks = get_time_blocks()
+
+    # Handle potential issues with time_slots or days_of_week
+    if not time_blocks:
+        # Serve the error.html template for data loading issues
+        return render_template('error.html', message="Imposible cargar datos del usuario. Inténtelo más tarde."), 500
+
+    return render_template('index.html', bloques_horarios=time_blocks, ci=ci, professor_name=professor_name)
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    preferences = request.form.get('preferences')
-    if not preferences:
-        return '<p>Error: Ha ocurrido un error.</p>', 400
-    preferences_data = json.loads(preferences)
-    ci = 0  # Cambiar según sea necesario
-    guardar_respuesta(preferences_data, ci)
-    # TODO: obtener el nombre del profesor a partir de la cedula
-    return f'<p>Confirmación: Se han guardado las preferencias horarias para Nombre!</p>', 200
+    try:
+        # Parse JSON payload
+        data = request.data
+        preferences = json.loads(data.decode('utf-8'))
+        if not preferences:
+            return '<p>Error: Debes proporcionar preferencias.</p>', 400
+        print(f"Preferences received: {preferences}")
+        ci = session.get('user_id')  # Use the logged-in user's ID
+        save_response(preferences, ci)
+        return {"success": True, "message": "Preferencias guardadas correctament"}, 200
+    except json.JSONDecodeError:
+        return {"success": False, "message": "No se ha podido decodificar correctamente el JSON"}, 400
+    except Exception as e:
+        return {"success": False, "message": str(e)}, 500
 
 @app.route('/')
 def handle_auth():
-    # TODO: cambiar estos return para que devuelva a la pagina de la UM/profesores
     token = request.args.get('token')
     if not token:
-        return {"error": "Token missing"}, 400
+        # Serve the error.html template for missing token
+        return render_template('error.html', message="Token faltante. Por favor, intente acceder nuevamente."), 400
 
     try:
         # Decode and validate the token
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"], audience='horariosFIUM2025')
         user_id = payload.get('user_id')
         if not user_id:
-            return {"error": "Invalid token payload"}, 400
-        print(f"User ID: {user_id}")
+            # Serve the error.html template for invalid token payload
+            return render_template('error.html', message="Token inválido. Por favor, intente acceder nuevamente."), 400
+
         # Store user_id in session and set session timeout
         session['user_id'] = user_id
         session.permanent = True
@@ -79,16 +92,15 @@ def handle_auth():
         # Redirect to preferences page
         return redirect('/preferences')
     except jwt.ExpiredSignatureError:
-        return {"error": "Token expired"}, 401
+        # Serve the error.html template for expired token
+        return render_template('error.html', message="El token ha expirado. Por favor, inicie sesión nuevamente."), 401
     except jwt.InvalidTokenError:
-        return {"error": "Invalid token"}, 403
+        # Serve the error.html template for invalid token
+        return render_template('error.html', message="Token inválido. Por favor, intente acceder nuevamente."), 403
     except jwt.InvalidAudienceError:
-        return {"error": "Invalid audience"}, 403
+        # Serve the error.html template for invalid audience
+        return render_template('error.html', message="Audiencia inválida en el token. Por favor, intente acceder nuevamente."), 403
 
 if __name__ == "__main__":
-
-    # Wrap the get_time_info() call inside an application context
-    with app.app_context():
-        time_slots, days_of_week = get_time_info()
     app.run(port=5000, debug=True)
 

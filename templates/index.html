@@ -1,100 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Selección de preferencias horarias</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
 
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Selección de preferencias horarias</title>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-	<script src="https://unpkg.com/htmx.org@1.5.0"></script>
-	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
+  <body>
+    <div class="container mt-5">
+      <div class="row">
+        <!-- User Information Section -->
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              Información del Usuario
+            </div>
+            <div class="card-body">
+              <p><strong>Documento:</strong> {{ ci }}</p>
+              <p><strong>Nombre:</strong> {{ professor_name }}</p>
+              <p><strong>Rol:</strong> Profesor</p>
+            </div>
+          </div>
+        </div>
 
-<body>
-	<div>{{ ci }}</div>
-	<div class="container mt-5">
-		<div class="text-center mb-4">
-			<h2>Seleccione su preferencia horaria</h2>
-			<p class="lead">
-				1 = más preferido &nbsp;&nbsp;•&nbsp;&nbsp; 3 = menos preferido &nbsp;&nbsp;•&nbsp;&nbsp; 0 = no
-				disponible
-			</p>
-		</div>
+        <!-- Form Section -->
+        <div class="col-md-9">
+          <div class="text-center mb-4">
+            <h2>Seleccione su preferencia horaria</h2>
+            <p class="lead">
+              1 = más preferido &nbsp;&nbsp;•&nbsp;&nbsp; 3 = menos preferido
+              &nbsp;&nbsp;•&nbsp;&nbsp; 0 = no disponible
+            </p>
+          </div>
 
-		<form hx-post="/submit" hx-target="#confirmation" onsubmit="updatePreferences()" class="mb-4">
-			<div class="table-responsive">
-				<table class="table table-bordered table-hover text-center">
-					<thead class="thead-dark">
-						<tr>
-							<th>Hora</th>
-							{% for day in days_of_week %}
-							<th>{{ day }}</th>
-							{% endfor %}
-						</tr>
-					</thead>
-					<tbody>
-						{% for time in time_slots %}
-						<tr>
-							<td class="font-weight-bold align-middle">{{ time }}</td>
-							{% for day in days_of_week %}
-							<td class="time-slot align-middle" data-time="{{ time }}" data-day="{{ day }}"
-								onclick="cyclePreference(this)">0</td>
-							{% endfor %}
-						</tr>
-						{% endfor %}
-					</tbody>
-				</table>
-			</div>
+          <form onsubmit="handleFormSubmit(event)" class="mb-4">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover text-center">
+                <thead class="thead-dark">
+                  <tr>
+                    <th>Hora</th>
+                    <th>Lunes</th>
+                    <th>Martes</th>
+                    <th>Miércoles</th>
+                    <th>Jueves</th>
+                    <th>Viernes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for time_slot in bloques_horarios|groupby('hora_inicio') %}
+                  <tr>
+                    <td class="font-weight-bold align-middle">
+                      {{ time_slot.grouper }} - {{ time_slot.list[0].hora_fin }}
+                    </td>
+                    {% for day in ['Lunes', 'Martes', 'Miércoles', 'Jueves',
+                    'Viernes'] %}
+                    <td
+                      class="time-slot align-middle"
+                      data-id="{{ time_slot.list[loop.index0].id }}"
+                      data-time="{{ time_slot.grouper }}"
+                      data-day="{{ day }}"
+                      onclick="cyclePreference(this)"
+                    >
+                      {% set slot = time_slot.list | selectattr('dia',
+                      'equalto', day) | list %} {{ slot[0].preference if
+                      slot|length > 0 else 0 }}
+                    </td>
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
 
-			<input type="hidden" name="preferences" id="hidden-preferences">
+            <input type="hidden" name="preferences" id="hidden-preferences" />
 
-			<div class="text-center">
-				<button type="submit" class="btn btn-primary btn-lg mt-3">Enviar preferencias</button>
-			</div>
-		</form>
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary btn-lg mt-3">
+                Enviar preferencias
+              </button>
+            </div>
+          </form>
 
-		<div id="confirmation" class="alert alert-success d-none text-center" role="alert">
-			¡Preferencias enviadas correctamente!
-		</div>
-	</div>
+          <div
+            id="confirmation"
+            class="alert d-none text-center"
+            role="alert"
+          ></div>
+        </div>
+      </div>
+    </div>
 
-	<script>
-		// Cycle through preferences 0 to 3 on click
-		function cyclePreference(cell) {
-			let current = parseInt(cell.innerText);
-			let newValue = (current + 1) % 4; // Cycle between 0 and 3
-			cell.innerText = newValue;
+    <script>
+      // Cycle through preferences 0 to 3 on click
+      function cyclePreference(cell) {
+        let current = parseInt(cell.innerText);
+        let newValue = (current + 1) % 4; // Cycle between 0 and 3
+        cell.innerText = newValue;
 
-			// Remove previous value classes
-			cell.classList.remove('value-0', 'value-1', 'value-2', 'value-3');
+        // Remove previous value classes
+        cell.classList.remove("value-0", "value-1", "value-2", "value-3");
 
-			// Add new value class
-			if (newValue !== 0) {
-				cell.classList.add('value-' + newValue);
-			}
-		}
+        // Add new value class
+        if (newValue !== 0) {
+          cell.classList.add("value-" + newValue);
+        }
+      }
 
-		// Prepare preferences data for submission
-		function updatePreferences() {
-			const preferences = {};
+      // Handle form submission
+      function handleFormSubmit(event) {
+        event.preventDefault(); // Prevent the default form submission
 
-			// Collect all cells with preference values
-			document.querySelectorAll('.time-slot').forEach(cell => {
-				const time = cell.getAttribute('data-time');
-				const day = cell.getAttribute('data-day');
-				const value = parseInt(cell.innerText);
+        const preferences = {}; // Collect preferences data here
 
-				// Initialize time slot entry if not present
-				if (!preferences[time]) {
-					preferences[time] = {};
-				}
-				preferences[time][day] = value;
-			});
+        // Collect preferences data
+        document.querySelectorAll(".time-slot").forEach((cell) => {
+          const id = cell.getAttribute("data-id");
+          const value = parseInt(cell.innerText);
 
-			// Update hidden input with JSON-encoded preferences
-			document.getElementById('hidden-preferences').value = JSON.stringify(preferences);
-		}
-	</script>
-</body>
+          if (id && value !== 0) {
+            // Only include preferences with valid IDs and values other than 0
+            preferences[id] = value;
+          }
+        });
 
+        // Log the JSON to the console (for debugging purposes)
+        console.log(JSON.stringify({ preferences }));
+
+        // Send the data to the server
+        fetch("/submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ preferences }), // Send preferences as JSON
+        })
+          .then((response) => response.json()) // Expect JSON response from the server
+          .then((data) => {
+            const confirmation = document.getElementById("confirmation");
+            confirmation.classList.remove(
+              "d-none",
+              "alert-danger",
+              "alert-success"
+            );
+            if (data.error) {
+              confirmation.classList.add("alert-danger");
+              confirmation.innerHTML = `<p>Error1: ${data.error}</p>`;
+            } else {
+              confirmation.classList.add("alert-success");
+              confirmation.innerHTML = `<p>Preferencias enviadas correctamente.</p>`;
+            }
+          })
+          .catch((error) => {
+            const confirmation = document.getElementById("confirmation");
+            confirmation.classList.remove("d-none", "alert-success");
+            confirmation.classList.add("alert-danger");
+            confirmation.innerHTML = `<p>Error2: ${error.message}</p>`;
+          });
+      }
+    </script>
+  </body>
 </html>

@@ -28,7 +28,7 @@ call .venv\Scripts\activate
 
 :: Instalar dependencias
 echo Instalando dependencias...
-call pip install -r requirements.txt
+call pip install -r requirements.txt -q
 
 :: Verificar si PostgreSQL está en ejecución
 echo Verificando si PostgreSQL está en ejecución...
@@ -39,8 +39,8 @@ if %errorlevel% neq 0 (
 )
 
 :: Configurar la base de datos
-:: echo Configurando la base de datos...
-:: python initialize_db.py
+@REM echo Configurando la base de datos...
+@REM python initialize_db.py
 
 :: Iniciar el servidor
 echo Iniciando el servidor...

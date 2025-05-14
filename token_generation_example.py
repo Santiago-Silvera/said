@@ -1,6 +1,6 @@
 import jwt
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,8 +16,8 @@ def generate_token(user_id):
     """
     payload = {
         "user_id": user_id,
-        "exp": datetime.utcnow() + timedelta(minutes=30),
-        "iat": datetime.utcnow(), 
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
+        "iat": datetime.now(timezone.utc), 
         "aud": 'horariosFIUM2025'
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")

@@ -1,61 +1,100 @@
-from entities import db, Preferencia, BloqueHorario, Profesor
-import json
+from entities import db, Prioridad, BloqueHorario, Profesor, Materia, Turno, PuedeDictar
 
-def guardar_respuesta(preferences_data, ci):
+def save_response(preferences, ci):
     """
     Guarda las preferencias horarias de un profesor en la base de datos.
 
-    :param preferences_data: Lista de preferencias horarias.
+    :param preferences: Diccionario con índices de bloques horarios como claves y prioridades como valores.
     :param ci: Cédula del profesor.
     """
-    profesor = Profesor.query.filter_by(cedula=ci).first()
+    profesor = Profesor.query.filter_by(cedula=str(ci)).first()
     if not profesor:
         raise ValueError(f"No se encontró un profesor con la cédula {ci}")
 
-    for preference in preferences_data:
-        bloque_horario_id = preference.get('bloque_horario_id')
-        valor_prioridad = preference.get('valor_prioridad')
-
+    for bloque_horario_id, valor_prioridad in preferences.items():
         # Verificar si el bloque horario existe
         bloque_horario = BloqueHorario.query.get(bloque_horario_id)
         if not bloque_horario:
             raise ValueError(f"No se encontró un bloque horario con ID {bloque_horario_id}")
 
-        # Crear una nueva preferencia
-        nueva_preferencia = Preferencia(
-            valor_prioridad=valor_prioridad,
-            profesor_cedula=ci,
-            bloque_horario_id=bloque_horario_id
-        )
-        db.session.add(nueva_preferencia)
+        # Crear o actualizar una prioridad
+        prioridad = Prioridad.query.filter_by(profesor=str(ci), bloque_horario=bloque_horario_id).first()
+        if prioridad:
+            prioridad.valor = valor_prioridad
+        else:
+            nueva_prioridad = Prioridad(
+                profesor=ci,
+                bloque_horario=bloque_horario_id,
+                valor=valor_prioridad
+            )
+            db.session.add(nueva_prioridad)
 
     # Guardar los cambios en la base de datos
     db.session.commit()
 
-
-def get_time_info():
+def get_time_blocks():
     """
     Obtiene información de los horarios y días disponibles.
 
-    :return: Una tupla con dos listas: horarios y días de la semana.
+    :return: Un diccionario con bloques horarios y días de la semana.
     """
-    horarios = db.session.query(BloqueHorario.dia).distinct().all()
-    horarios = [h[0] for h in horarios]  # Extraer los valores de los resultados
+    bloques_horarios = BloqueHorario.query.all()
+    return [
+        {
+            "id": bloque.id,
+            "dia": bloque.dia,
+            "hora_inicio": bloque.hora_inicio.strftime("%H:%M"),
+            "hora_fin": bloque.hora_fin.strftime("%H:%M")
+        }
+        for bloque in bloques_horarios
+    ]
 
-    dias = db.session.query(BloqueHorario.horario_id).distinct().all()
-    dias = [d[0] for d in dias]  # Extraer los valores de los resultados
-    if not horarios or not dias:
-        # raise ValueError("No se encontraron horarios o días en la base de datos")
-        return ["8:00", "9:00"], ["Lunes", "Martes"]  # Valores por defecto para evitar errores
-    return horarios, dias
-
-
-def verificar_profesor(ci):
+def verify_professor(ci):
     """
     Verifica si un profesor existe en la base de datos.
 
     :param ci: Cédula del profesor.
     :return: True si el profesor existe, False en caso contrario.
     """
-    profesor = Profesor.query.filter_by(cedula=ci).first()
-    return profesor is not None
+    return Profesor.query.filter_by(cedula=str(ci)).first() is not None
+
+def listar_materias():
+    """
+    Lista todas las materias disponibles.
+
+    :return: Una lista de materias.
+    """
+    materias = Materia.query.all()
+    return [
+        {
+            "codigo": materia.codigo,
+            "nombre": materia.nombre,
+            "carga_horaria": materia.carga_horaria
+        }
+        for materia in materias
+    ]
+
+def listar_turnos():
+    """
+    Lista todos los turnos disponibles.
+
+    :return: Una lista de turnos.
+    """
+    turnos = Turno.query.all()
+    return [turno.nombre for turno in turnos]
+
+
+def get_professor_data(ci: int):
+    """
+    Obtiene los datos de un profesor a partir de su cédula.
+
+    :param ci: Cédula del profesor.
+    :return: Un diccionario con los datos del profesor.
+    """
+    profesor = Profesor.query.filter_by(cedula=str(ci)).first()
+    if not profesor:
+        raise ValueError(f"No se encontró un profesor con la cédula {ci}")
+    
+    return {
+        "nombre": profesor.nombre,
+    }
