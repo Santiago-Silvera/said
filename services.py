@@ -11,11 +11,16 @@ def save_response(preferences, ci):
     if not profesor:
         raise ValueError(f"No se encontró un profesor con la cédula {ci}")
 
+    # Eliminar preferencias previas
+    Prioridad.query.filter_by(profesor=str(ci)).delete()
+
+    print("Preferences to save:", preferences)
     for bloque_horario_id, valor_prioridad in preferences.items():
         # Verificar si el bloque horario existe
         bloque_horario = BloqueHorario.query.get(bloque_horario_id)
         if not bloque_horario:
             raise ValueError(f"No se encontró un bloque horario con ID {bloque_horario_id}")
+        valor_prioridad = valor_prioridad if valor_prioridad else 0
 
         # Crear o actualizar una prioridad
         prioridad = Prioridad.query.filter_by(profesor=str(ci), bloque_horario=bloque_horario_id).first()
@@ -98,3 +103,10 @@ def get_professor_data(ci: int):
     return {
         "nombre": profesor.nombre,
     }
+
+def get_previous_preferences(ci):
+    """
+    Devuelve un diccionario {bloque_horario_id: valor} con las preferencias previas del profesor.
+    """
+    preferencias = Prioridad.query.filter_by(profesor=str(ci)).all()
+    return {p.bloque_horario: p.valor for p in preferencias}

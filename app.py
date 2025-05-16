@@ -3,8 +3,8 @@ from flask import Flask, render_template, request, redirect, session
 import os
 import jwt
 from dotenv import load_dotenv
-from entities import db
-from services import save_response, get_time_blocks, verify_professor, get_professor_data
+from entities import db, Prioridad
+from services import save_response, get_time_blocks, verify_professor, get_professor_data, get_previous_preferences
 from datetime import timedelta
 
 # Load environment variables from .env file
@@ -44,6 +44,13 @@ def index():
 
     # Get time information
     time_blocks = get_time_blocks()
+    previous_preferences = get_previous_preferences(ci)
+    print(f"Previous preferences for user {ci}:")
+    print(previous_preferences)
+
+    # Merge previous preferences into time_blocks
+    for block in time_blocks:
+        block['preference'] = previous_preferences.get(block['id'], 0)
 
     # Handle potential issues with time_slots or days_of_week
     if not time_blocks:
@@ -57,17 +64,20 @@ def submit():
     try:
         # Parse JSON payload
         data = request.data
-        preferences = json.loads(data.decode('utf-8'))
+        json_data = json.loads(data.decode('utf-8'))
+        preferences = json_data.get('preferences', None)
         if not preferences:
-            return '<p>Error: Debes proporcionar preferencias.</p>', 400
-        print(f"Preferences received: {preferences}")
+            return {"error": "Debes proporcionar preferencias."}, 400
+
         ci = session.get('user_id')  # Use the logged-in user's ID
+
         save_response(preferences, ci)
+
         return {"success": True, "message": "Preferencias guardadas correctament"}, 200
     except json.JSONDecodeError:
-        return {"success": False, "message": "No se ha podido decodificar correctamente el JSON"}, 400
+        return {"error": "No se ha podido decodificar correctamente el JSON"}, 400
     except Exception as e:
-        return {"success": False, "message": str(e)}, 500
+        return {"error": str(e)}, 500
 
 @app.route('/')
 def handle_auth():
