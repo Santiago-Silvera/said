@@ -37,8 +37,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # Configurar la base de datos
-# echo "Configurando la base de datos..."
-# python3 initialize_db.py
+echo "Configurando la base de datos..."
+python3 initialize_db.py
 
 # Iniciar el servidor
 echo "Iniciando el servidor..."

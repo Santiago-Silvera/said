@@ -32,9 +32,9 @@ class TestServices(unittest.TestCase):
                                mock_prioridad_class: MagicMock, 
                                mock_db_session: MagicMock):
         # Mock Profesor.query.filter_by().first()
-        mock_profesor_query = MagicMock()
-        mock_profesor_query.filter_by.return_value.first.return_value = MagicMock(cedula=123)
-        mock_profesor_class.query = mock_profesor_query
+        mock_profesor = MagicMock(cedula=123)
+        mock_profesor_class.query = MagicMock()
+        mock_profesor_class.query.filter_by.return_value.first.return_value = mock_profesor
 
         # Mock Prioridad.query.filter_by().delete() and .first()
         mock_prioridad_query = MagicMock()
@@ -57,6 +57,8 @@ class TestServices(unittest.TestCase):
         # Comprobaciones
         self.assertEqual(mock_db_session.add.call_count, 2)
         mock_db_session.commit.assert_called_once()
+        # Verifica que se haya actualizado ultima_modificacion
+        self.assertIsNotNone(mock_profesor.ultima_modificacion)
 
     @patch('services.BloqueHorario')
     def test_obtener_bloques_horarios(self, mock_bloque_horario: MagicMock):

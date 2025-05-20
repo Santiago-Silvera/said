@@ -16,7 +16,7 @@ def generate_token(user_id):
 
 @app.route('/')
 def index():
-    user_id = request.args.get('user_id', '12345')
+    user_id = request.args.get('user_id', '1001')
     token = generate_token(user_id)
     url = f"http://localhost:5000/?token={token}"
     return render_template_string('<h2>Enlace a la app principal:</h2><a href="{{ url }}">{{ url }}</a>', url=url)

@@ -27,6 +27,22 @@
               <p><strong>Documento:</strong> {{ ci }}</p>
               <p><strong>Nombre:</strong> {{ professor_name }}</p>
               <p><strong>Rol:</strong> Profesor</p>
+              <hr />
+              <strong>Materias asignadas:</strong>
+              <ul>
+                {% for materia in materias_asignadas %}
+                <li>
+                  {{ materia.codigo }} - {{ materia.nombre }} ({{
+                  materia.carga_horaria }} hs)
+                </li>
+                {% endfor %}
+              </ul>
+              <strong>Turnos asignados:</strong>
+              <ul>
+                {% for turno in turnos_asignados %}
+                <li>{{ turno }}</li>
+                {% endfor %}
+              </ul>
             </div>
           </div>
         </div>
@@ -63,14 +79,15 @@
                     'Viernes'] %} {% set slot_preference =
                     time_slot.list[loop.index0].preference %}
                     <td
-                      class="time-slot align-middle value-{{ slot_preference }}"
+                      class="time-slot align-middle value-{{ slot_preference }}{% if time_slot.list[loop.index0].id in bloques_turno %} resaltado {% endif %}"
                       data-id="{{ time_slot.list[loop.index0].id }}"
                       data-time="{{ time_slot.grouper }}"
                       data-day="{{ day }}"
                       onclick="cyclePreference(this)"
                     >
-                      {% if slot_preference and slot_preference > 0 %}{{
-                      time_slot.list[loop.index0].preference }}{% endif %}
+                      {% if slot_preference and slot_preference > 0 %} {{
+                      time_slot.list[loop.index0].preference }} {% else %} X {%
+                      endif %}
                     </td>
                     {% endfor %}
                   </tr>
@@ -101,12 +118,15 @@
       // Cycle through preferences 0 to 3 on click
       function cyclePreference(cell) {
         let current = parseInt(cell.innerText);
-        console.log("Current value:", current);
         if (isNaN(current)) {
-          current = 0; // Default to 0 if not a number
+          current = 0;
         }
-        let newValue = (current + 1) % 4; // Cycle between 0 and 3
-        cell.innerText = newValue;
+        let newValue = (current + 1) % 4;
+        if (newValue === 0) {
+          cell.innerText = "X";
+        } else {
+          cell.innerText = newValue;
+        }
 
         // Remove previous value classes
         cell.classList.remove("value-0", "value-1", "value-2", "value-3");
@@ -121,15 +141,16 @@
       function handleFormSubmit(event) {
         event.preventDefault(); // Prevent the default form submission
 
-        const preferences = {}; // Collect preferences data here
+        const preferences = {};
 
         // Collect preferences data
         document.querySelectorAll(".time-slot").forEach((cell) => {
           const id = cell.getAttribute("data-id");
           const value = parseInt(cell.innerText);
-
+          if (isNaN(value)) {
+            return;
+          }
           if (id && value !== 0) {
-            // Only include preferences with valid IDs and values other than 0
             preferences[id] = value;
           }
         });

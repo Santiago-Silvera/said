@@ -35,22 +35,7 @@ td.time-slot {
 .time-slot {
   cursor: pointer;
   text-align: center;
-  background-color: #f8f9fa;
-}
-
-.time-slot.value-1 {
-  background-color: #ffe6e6;
-  /* Light red for 1 */
-}
-
-.time-slot.value-2 {
-  background-color: #ffcccb;
-  /* Red for 2 */
-}
-
-.time-slot.value-3 {
-  background-color: #ff9999;
-  /* Darker red for 3 */
+  background-color: #dddddd;
 }
 
 .table {
@@ -61,4 +46,8 @@ td.time-slot {
 .table th,
 .table td {
   word-wrap: break-word; /* Ensures text wraps within the cell if it's too long */
+}
+
+.resaltado {
+  background-color: #ffffff;
 }

@@ -8,14 +8,16 @@ def guardar_respuesta(preferences, ci):
     :param preferences: Diccionario con índices de bloques horarios como claves y prioridades como valores.
     :param ci: Cédula del profesor.
     """
-    profesor = Profesor.query.filter_by(cedula=str(ci)).first()
+    profesor: Profesor = Profesor.query.filter_by(cedula=str(ci)).first()
     if not profesor:
         raise ValueError(f"No se encontró un profesor con la cédula {ci}")
+
+    profesor.ultima_modificacion = db.func.now()
 
     # Eliminar preferencias previas
     Prioridad.query.filter_by(profesor=str(ci)).delete()
 
-    print("Preferences to save:", preferences)
+    print("services.py: Preferences to save:", preferences)
     for bloque_horario_id, valor_prioridad in preferences.items():
         # Verificar si el bloque horario existe
         bloque_horario = BloqueHorario.query.get(bloque_horario_id)

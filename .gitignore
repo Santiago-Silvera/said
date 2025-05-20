@@ -3,6 +3,3 @@
 venv/
 .venv/
 __pycache__/
-
-
-dummy_service/

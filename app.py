@@ -1,11 +1,11 @@
 import json
-from typing import Any
+from typing import Any, List
 from flask import Flask, render_template, request, redirect, session
 import os
 import jwt
 from dotenv import load_dotenv
 from entities import db
-from services import guardar_respuesta, obtener_bloques_horarios, verificar_profesor, get_professor_data, get_previous_preferences
+from services import guardar_respuesta, obtener_bloques_horarios, verificar_profesor, get_professor_data, get_previous_preferences, listar_turnos_materias_profesor
 from datetime import timedelta
 
 # Load environment variables from .env file
@@ -38,28 +38,43 @@ db.init_app(app)
 def index():
     ci: int | Any = session.get('user_id')
     if not verificar_profesor(ci):
-        # Serve the error.html template for unauthenticated users
         return render_template('error.html', message="Usuario no autenticado. Por favor, inicie sesión."), 401
 
     professor_data = get_professor_data(ci)
     professor_name = professor_data.get('nombre')
 
-    # Get time information
-    time_blocks = obtener_bloques_horarios(turno=None)
-    previous_preferences = get_previous_preferences(ci)
-    print(f"Previous preferences for user {ci}:")
-    print(previous_preferences)
+    # Obtener materias y turnos asignados
+    asignaciones = listar_turnos_materias_profesor(ci)
+    materias_asignadas = asignaciones["materias"]
+    turnos_asignados = asignaciones["turnos"]
+    if not turnos_asignados:
+        return render_template('error.html', message="No se han encontrado turnos asignados para el profesor."), 404
 
-    # Merge previous preferences into time_blocks
-    for block in time_blocks:
+    # Obtener bloques horarios por turno
+    bloques_turno: List[int] = []
+    for turno in turnos_asignados:
+        bt = obtener_bloques_horarios(turno=turno)
+        bloques_turno.extend([b.get("id") for b in bt])
+    
+    print("app: bloques_turno:", bloques_turno)
+    
+    all_time_blocks = obtener_bloques_horarios(turno=None)
+    previous_preferences = get_previous_preferences(ci)
+    for block in all_time_blocks:
         block['preference'] = previous_preferences.get(block['id'], 0)
 
-    # Handle potential issues with time_slots or days_of_week
-    if not time_blocks:
-        # Serve the error.html template for data loading issues
+    if not all_time_blocks:
         return render_template('error.html', message="Imposible cargar datos del usuario. Inténtelo más tarde."), 500
 
-    return render_template('index.html', bloques_horarios=time_blocks, ci=ci, professor_name=professor_name)
+    return render_template(
+        'index.html',
+        bloques_horarios=all_time_blocks,
+        ci=ci,
+        professor_name=professor_name,
+        materias_asignadas=materias_asignadas,
+        turnos_asignados=turnos_asignados,
+        bloques_turno=bloques_turno
+    )
 
 
 @app.route('/submit', methods=['POST'])
