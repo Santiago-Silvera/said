@@ -1,10 +1,11 @@
 import json
+from typing import Any
 from flask import Flask, render_template, request, redirect, session
 import os
 import jwt
 from dotenv import load_dotenv
 from entities import db
-from services import save_response, get_time_blocks, verify_professor, get_professor_data, get_previous_preferences
+from services import guardar_respuesta, obtener_bloques_horarios, verificar_profesor, get_professor_data, get_previous_preferences
 from datetime import timedelta
 
 # Load environment variables from .env file
@@ -32,10 +33,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+
 @app.route('/preferences')
 def index():
-    ci = session.get('user_id')
-    if not verify_professor(ci):
+    ci: int | Any = session.get('user_id')
+    if not verificar_profesor(ci):
         # Serve the error.html template for unauthenticated users
         return render_template('error.html', message="Usuario no autenticado. Por favor, inicie sesión."), 401
 
@@ -43,7 +45,7 @@ def index():
     professor_name = professor_data.get('nombre')
 
     # Get time information
-    time_blocks = get_time_blocks()
+    time_blocks = obtener_bloques_horarios(turno=None)
     previous_preferences = get_previous_preferences(ci)
     print(f"Previous preferences for user {ci}:")
     print(previous_preferences)
@@ -59,6 +61,7 @@ def index():
 
     return render_template('index.html', bloques_horarios=time_blocks, ci=ci, professor_name=professor_name)
 
+
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
@@ -71,13 +74,14 @@ def submit():
 
         ci = session.get('user_id')  # Use the logged-in user's ID
 
-        save_response(preferences, ci)
+        guardar_respuesta(preferences, ci)
 
         return {"success": True, "message": "Preferencias guardadas correctament"}, 200
     except json.JSONDecodeError:
         return {"error": "No se ha podido decodificar correctamente el JSON"}, 400
     except Exception as e:
         return {"error": str(e)}, 500
+
 
 @app.route('/')
 def handle_auth():
@@ -103,13 +107,10 @@ def handle_auth():
         return redirect('/preferences')
     except jwt.ExpiredSignatureError:
         # Serve the error.html template for expired token
-        return render_template('error.html', message="El token ha expirado. Por favor, inicie sesión nuevamente."), 401
-    except jwt.InvalidTokenError:
-        # Serve the error.html template for invalid token
-        return render_template('error.html', message="Token inválido. Por favor, intente acceder nuevamente."), 403
-    except jwt.InvalidAudienceError:
-        # Serve the error.html template for invalid audience
-        return render_template('error.html', message="Audiencia inválida en el token. Por favor, intente acceder nuevamente."), 403
+        return render_template('error.html', message="Su sesión ha expirado. Por favor, inicie sesión nuevamente."), 401
+    except Exception:
+        return render_template('error.html', message="No se ha podido autenticar. Por favor, intente acceder nuevamente."), 500
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

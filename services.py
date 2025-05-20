@@ -1,6 +1,7 @@
-from entities import db, Prioridad, BloqueHorario, Profesor, Materia, Turno, PuedeDictar
+from typing import Any, List
+from entities import TurnoHorario, db, Prioridad, BloqueHorario, Profesor, Materia, Turno, PuedeDictar
 
-def save_response(preferences, ci):
+def guardar_respuesta(preferences, ci):
     """
     Guarda las preferencias horarias de un profesor en la base de datos.
 
@@ -37,13 +38,25 @@ def save_response(preferences, ci):
     # Guardar los cambios en la base de datos
     db.session.commit()
 
-def get_time_blocks():
+def obtener_bloques_horarios(turno=None):
     """
-    Obtiene información de los horarios y días disponibles.
+    Obtiene información de los horarios y días disponibles según el turno ingresado.
 
-    :return: Un diccionario con bloques horarios y días de la semana.
+    :param turno: Nombre del turno (opcional).
+    :return: Una lista de diccionarios con bloques horarios y días de la semana.
     """
-    bloques_horarios = BloqueHorario.query.all()
+    if turno is None:
+        # Obtener todos los bloques horarios
+        bloques_horarios = BloqueHorario.query.all()
+    else:
+        # Unir TurnoHorario con BloqueHorario usando el id de bloque
+        bloques_horarios = (
+            db.session.query(BloqueHorario)
+            .join(TurnoHorario, BloqueHorario.id == TurnoHorario.id)
+            .filter(TurnoHorario.turno == turno)
+            .all()
+        )
+
     return [
         {
             "id": bloque.id,
@@ -54,14 +67,16 @@ def get_time_blocks():
         for bloque in bloques_horarios
     ]
 
-def verify_professor(ci):
+
+def verificar_profesor(ci: int) -> bool:
     """
     Verifica si un profesor existe en la base de datos.
 
     :param ci: Cédula del profesor.
     :return: True si el profesor existe, False en caso contrario.
     """
-    return Profesor.query.filter_by(cedula=str(ci)).first() is not None
+    profesor = Profesor.query.filter_by(cedula=str(ci)).first()
+    return profesor is not None
 
 def listar_materias():
     """
@@ -69,7 +84,7 @@ def listar_materias():
 
     :return: Una lista de materias.
     """
-    materias = Materia.query.all()
+    materias: List[Any] = Materia.query.all()
     return [
         {
             "codigo": materia.codigo,
@@ -110,3 +125,40 @@ def get_previous_preferences(ci):
     """
     preferencias = Prioridad.query.filter_by(profesor=str(ci)).all()
     return {p.bloque_horario: p.valor for p in preferencias}
+
+
+def listar_turnos_materias_profesor(ci):
+    """
+    Lista todas las materias asociadas a un profesor dado su cédula y los turnos asociados a esas materias.
+
+    :param ci: Cédula del profesor.
+    :return: Un diccionario con dos listas: 'materias' y 'turnos'.
+    """
+    profesor = Profesor.query.filter_by(cedula=str(ci)).first()
+    if not profesor:
+        raise ValueError(f"No se encontró un profesor con la cédula {ci}")
+
+    # Buscar todas las filas de PuedeDictar para este profesor
+    puede_dictar = PuedeDictar.query.filter_by(profesor=str(ci)).all()
+
+    lista_materias = []
+    lista_turnos = set()
+    codigos_materias = set()
+
+    for pd in puede_dictar:
+        materia = Materia.query.filter_by(codigo=pd.materia).first()
+        turno = Turno.query.filter_by(nombre=pd.turno).first()
+        if materia and materia.codigo not in codigos_materias:
+            lista_materias.append({
+                "codigo": materia.codigo,
+                "nombre": materia.nombre,
+                "carga_horaria": materia.carga_horaria
+            })
+            codigos_materias.add(materia.codigo)
+        if turno:
+            lista_turnos.add(turno.nombre)
+
+    return {
+        "materias": lista_materias,
+        "turnos": list(lista_turnos)
+    }

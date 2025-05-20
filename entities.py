@@ -94,13 +94,13 @@ class Turno(db.Model):
 
 class TurnoHorario(db.Model):
     __tablename__ = 'turnos_horarios'
+    id = db.Column(db.Integer, db.ForeignKey('bloques_horarios.id'), primary_key=True)
     hora_inicio = db.Column(db.Time, nullable=False)
     hora_fin = db.Column(db.Time, nullable=False)
-    turno = db.Column(db.String, db.ForeignKey('turnos.nombre'))
+    turno = db.Column(db.String, db.ForeignKey('turnos.nombre'), primary_key=True)
 
     # Define foreign keys for the composite primary key in Horario
     __table_args__ = (
-        db.PrimaryKeyConstraint('hora_inicio', 'hora_fin', 'turno'),
         db.ForeignKeyConstraint(
             ['hora_inicio', 'hora_fin'],
             ['horarios.hora_inicio', 'horarios.hora_fin']
