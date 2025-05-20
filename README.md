@@ -47,3 +47,7 @@ En caso de Windows:
 ```bash
 .\init.bat
 ```
+
+# IMPORTANTE
+
+Verificar que el script de inicalización no llama al script initialize_db.py, este es un script de testing local y no debe usarse para iniciar el servicio web.
