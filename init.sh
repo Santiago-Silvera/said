@@ -12,8 +12,10 @@ if ! command -v pip &> /dev/null; then
     exit 1
 fi
 
+ENV_DIR="/home/horariosFIUM/env/horarios"
+
 # Verificar si existe un entorno virtual
-if [ -d ".venv" ]; then
+if [ -d $ENV_DIR ]; then
     echo "El entorno virtual ya existe."
 else
     echo "Creando entorno virtual..."
