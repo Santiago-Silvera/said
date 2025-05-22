@@ -5,7 +5,7 @@ import os
 import jwt
 from dotenv import load_dotenv
 from entities import db
-from services import guardar_respuesta, obtener_bloques_horarios, verificar_profesor, get_professor_data, get_previous_preferences, listar_turnos_materias_profesor
+from services import guardar_respuesta, obtener_bloques_horarios, verificar_profesor, get_professor_data, get_previous_preferences, listar_turnos_materias_profesor, decode_hash
 from datetime import timedelta
 
 # Load environment variables from .env file
@@ -55,9 +55,9 @@ def index():
     for turno in turnos_asignados:
         bt = obtener_bloques_horarios(turno=turno)
         bloques_turno.extend([b.get("id") for b in bt])
-    
+
     print("app: bloques_turno:", bloques_turno)
-    
+
     all_time_blocks = obtener_bloques_horarios(turno=None)
     previous_preferences = get_previous_preferences(ci)
     for block in all_time_blocks:
@@ -75,6 +75,20 @@ def index():
         turnos_asignados=turnos_asignados,
         bloques_turno=bloques_turno
     )
+
+
+@app.route('/')
+def entry():
+    hash_code = request.args.get('hash')
+    if not hash_code:
+        return render_template('error.html', message="Error de autenticación."), 401
+    ci: int = decode_hash(hash_code)
+
+    session['user_id'] = ci
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=30)
+
+    return redirect('/preferences')
 
 
 @app.route('/submit', methods=['POST'])
@@ -98,7 +112,7 @@ def submit():
         return {"error": str(e)}, 500
 
 
-@app.route('/')
+@app.route('/auth')
 def handle_auth():
     token = request.args.get('token')
     if not token:
@@ -116,7 +130,7 @@ def handle_auth():
         # Store user_id in session and set session timeout
         session['user_id'] = user_id
         session.permanent = True
-        app.permanent_session_lifetime = timedelta(minutes=30)  # Example: 30-minute session timeout
+        app.permanent_session_lifetime = timedelta(minutes=30)
 
         # Redirect to preferences page
         return redirect('/preferences')

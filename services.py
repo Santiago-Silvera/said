@@ -1,6 +1,19 @@
 from typing import Any, List
 from entities import TurnoHorario, db, Prioridad, BloqueHorario, Profesor, Materia, Turno, PuedeDictar
 
+
+def decode_hash(encoded: int) -> int:
+    offset = 7  # Debe ser el mismo que en ASP
+    original = ""
+
+    for i in range(0, len(encoded), 2):
+        hex_pair = encoded[i:i+2]
+        val = int(hex_pair, 16) - offset
+        original += chr(val)
+
+    return original
+
+
 def guardar_respuesta(preferences, ci):
     """
     Guarda las preferencias horarias de un profesor en la base de datos.

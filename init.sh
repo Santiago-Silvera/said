@@ -19,12 +19,12 @@ if [ -d $ENV_DIR ]; then
     echo "El entorno virtual ya existe."
 else
     echo "Creando entorno virtual..."
-    python3 -m venv .venv
+    python3 -m venv $ENV_DIR
 fi
 
 # Activar el entorno virtual
 echo "Activando el entorno virtual..."
-source .venv/bin/activate
+source $ENV_DIR/bin/activate
 
 # Instalar dependencias
 echo "Instalando dependencias..."
@@ -39,8 +39,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # Configurar la base de datos
-echo "Configurando la base de datos..."
-python3 initialize_db.py
+# echo "Configurando la base de datos..."
+# python3 initialize_db.py
 
 # Iniciar el servidor
 echo "Iniciando el servidor..."

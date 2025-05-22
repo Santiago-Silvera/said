@@ -4,7 +4,6 @@ pyjwt
 sqlalchemy
 flask_sqlalchemy
 psycopg2-binary
-
-# Added dependencies for development and database management
+psycopg2
 gunicorn
 alembic

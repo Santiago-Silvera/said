@@ -1,6 +1,5 @@
-import psycopg2
 import os
-from psycopg2 import OperationalError
+from psycopg2 import OperationalError, connect
 from dotenv import load_dotenv
 
 
@@ -15,7 +14,7 @@ def check_postgres_connection():
         password = os.getenv('POSTGRES_PASSWORD')
 
         # Attempt to connect to PostgreSQL
-        conn = psycopg2.connect(
+        conn = connect(
             host=host,
             port=port,
             dbname=dbname,
