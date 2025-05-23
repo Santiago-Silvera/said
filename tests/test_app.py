@@ -8,8 +8,8 @@ class TestAppEndpoints(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
 
-    @patch('app.verificar_profesor')
-    @patch('app.render_template')
+    @patch('said.verificar_profesor')
+    @patch('said.render_template')
     def test_index_unauthenticated(self, mock_render_template, mock_verificar_profesor):
         mock_verificar_profesor.return_value = False
         mock_render_template.return_value = "Error page"
@@ -21,12 +21,12 @@ class TestAppEndpoints(unittest.TestCase):
             'error.html', message="Usuario no autenticado. Por favor, inicie sesión."
         )
 
-    @patch('app.listar_turnos_materias_profesor')
-    @patch('app.get_professor_data')
-    @patch('app.obtener_bloques_horarios')
-    @patch('app.get_previous_preferences')
-    @patch('app.verificar_profesor')
-    @patch('app.render_template')
+    @patch('said.listar_turnos_materias_profesor')
+    @patch('said.get_professor_data')
+    @patch('said.obtener_bloques_horarios')
+    @patch('said.get_previous_preferences')
+    @patch('said.verificar_profesor')
+    @patch('said.render_template')
     def test_index_authenticated(
         self, mock_render_template, mock_verificar_profesor,
         mock_get_previous_preferences, mock_obtener_bloques_horarios,
@@ -76,14 +76,14 @@ class TestAppEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn(b"Error de autenticaci", response.data)
 
-    @patch('app.decode_hash')
+    @patch('said.decode_hash')
     def test_entry_valid_hash(self, mock_decode_hash):
         mock_decode_hash.return_value = 123
         response = self.app.get('/?hash=abc')
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith('/preferences'))
 
-    @patch('app.guardar_respuesta')
+    @patch('said.guardar_respuesta')
     def test_submit_valid_preferences(self, mock_guardar_respuesta):
         with self.app.session_transaction() as sess:
             sess['user_id'] = 123
