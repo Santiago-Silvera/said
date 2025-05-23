@@ -1,9 +1,8 @@
-from typing import List
 from datetime import time
 
 def initialize_database():
     from said import app
-    from entities import db, Profesor, Materia, Horario, BloqueHorario, Prioridad, Turno, TurnoHorario, PuedeDictar
+    from entities import db, Profesor, Materia, Horario, BloqueHorario, Turno, TurnoHorario, PuedeDictar
 
     with app.app_context():
         db.drop_all()
@@ -49,5 +48,28 @@ def initialize_database():
 
     print("Base de datos inicializada y tablas creadas.")
 
+def cargar_personas_desde_excel(path_xlsx):
+    from said import app
+    from entities import db, Persona 
+    import pandas as pd
+    df = pd.read_excel(path_xlsx)
+    # Espera columnas: 'Cedula', 'Nombre', 'Mail'
+    with app.app_context():
+        for _, row in df.iterrows():
+            ci = str(row['Cedula']).strip()
+            nombre = row['Nombre'].strip()
+            mail = row['Mail'].strip()
+            rol = 'profesor'  # Asignar rol por defecto
+            persona = Persona(
+                cedula=ci,
+                nombre=nombre.split()[0],  # Primer nombre
+                mail=mail,
+                rol=rol
+            )
+            db.session.merge(persona)  # merge para upsert
+        db.session.commit()
+        print("Profesores cargados correctamente.")
+
 if __name__ == "__main__":
-    initialize_database()
+    # initialize_database()
+    cargar_personas_desde_excel("profesores.xlsx")

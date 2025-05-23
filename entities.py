@@ -2,9 +2,20 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+class Persona(db.Model):
+    __tablename__ = 'personas'
+    cedula = db.Column(db.String, primary_key=True)
+    nombre = db.Column(db.String, nullable=False)
+    mail = db.Column(db.String, nullable=True)
+    rol = db.Column(db.String, db.CheckConstraint("rol IN ('profesor', 'administrador')"), nullable=False)
+
+    def __repr__(self):
+        return f'<Persona {self.cedula} - {self.nombre}>'
+
+
 class Profesor(db.Model):
     __tablename__ = 'profesores'
-    cedula = db.Column(db.String, primary_key=True)
+    cedula = db.Column(db.String, db.ForeignKey('personas.cedula'), primary_key=True)
     nombre = db.Column(db.String, unique=True, nullable=False)
     nombre_completo = db.Column(db.String, unique=True)
     ultima_modificacion = db.Column(db.DateTime, nullable=True)
