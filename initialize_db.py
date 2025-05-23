@@ -69,7 +69,7 @@ def cargar_personas_desde_excel(path_xlsx):
             rol = 'profesor'  # Asignar rol por defecto
             persona = Persona(
                 cedula=ci,
-                nombre=nombre.split()[0],  # Primer nombre
+                nombre=nombre,  # Primer nombre
                 mail=mail,
                 rol=rol
             )
