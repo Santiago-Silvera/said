@@ -44,4 +44,4 @@ fi
 
 # Iniciar el servidor
 echo "Iniciando el servidor..."
-python3 app.py
+python3 said.py
