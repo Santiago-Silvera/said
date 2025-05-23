@@ -1,13 +1,12 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import jwt
-from app import app
+from said import app
+
 
 class TestAppEndpoints(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
-        # self.app.testing = True
 
     @patch('app.verificar_profesor')
     @patch('app.render_template')
@@ -22,20 +21,40 @@ class TestAppEndpoints(unittest.TestCase):
             'error.html', message="Usuario no autenticado. Por favor, inicie sesión."
         )
 
-    @patch('app.verificar_profesor')
+    @patch('app.listar_turnos_materias_profesor')
     @patch('app.get_professor_data')
     @patch('app.obtener_bloques_horarios')
     @patch('app.get_previous_preferences')
+    @patch('app.verificar_profesor')
     @patch('app.render_template')
     def test_index_authenticated(
-        self, mock_render_template, mock_get_previous_preferences,
-        mock_obtener_bloques_horarios, mock_get_professor_data, mock_verificar_profesor
+        self, mock_render_template, mock_verificar_profesor,
+        mock_get_previous_preferences, mock_obtener_bloques_horarios,
+        mock_get_professor_data, mock_listar_turnos_materias_profesor
     ):
         mock_verificar_profesor.return_value = True
         mock_get_professor_data.return_value = {'nombre': 'Juan'}
-        mock_obtener_bloques_horarios.return_value = [
+        mock_listar_turnos_materias_profesor.return_value = {
+            "materias": [
+                {"codigo": "MAT101", "nombre": "Matemática", "carga_horaria": 4}
+            ],
+            "turnos": ["Mañana"]
+        }
+        # Simulate bloques_horarios for all and for turno
+        all_bloques = [
+            {'id': 1, 'dia': 'Monday', 'hora_inicio': '08:00', 'hora_fin': '10:00'},
+            {'id': 2, 'dia': 'Tuesday', 'hora_inicio': '10:00', 'hora_fin': '12:00'}
+        ]
+        turno_bloques = [
             {'id': 1, 'dia': 'Monday', 'hora_inicio': '08:00', 'hora_fin': '10:00'}
         ]
+        def obtener_bloques_horarios_side_effect(turno=None):
+            if turno is None:
+                return all_bloques
+            if turno == "Mañana":
+                return turno_bloques
+            return []
+        mock_obtener_bloques_horarios.side_effect = obtener_bloques_horarios_side_effect
         mock_get_previous_preferences.return_value = {1: 2}
         mock_render_template.return_value = "Rendered Template"
         with self.app.session_transaction() as sess:
@@ -46,37 +65,23 @@ class TestAppEndpoints(unittest.TestCase):
         args, kwargs = mock_render_template.call_args
         self.assertEqual(args[0], 'index.html')
         self.assertIn('bloques_horarios', kwargs)
+        self.assertIn('bloques_turno', kwargs)
         self.assertEqual(kwargs['ci'], 123)
         self.assertEqual(kwargs['professor_name'], 'Juan')
+        self.assertIn(1, kwargs['bloques_turno'])
+        self.assertNotIn(2, kwargs['bloques_turno'])
 
-    def test_handle_auth_missing_token(self):
+    def test_entry_missing_hash(self):
         response = self.app.get('/')
-        self.assertEqual(response.status_code, 400)
-        self.assertIn(b"Token faltante", response.data)
-
-    @patch('app.jwt.decode')
-    @patch('app.render_template')
-    def test_handle_auth_valid_token(self, mock_render_template, mock_jwt_decode):
-        mock_jwt_decode.return_value = {"user_id": 1}
-        response = self.app.get('/?token=valid_token')
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.location, '/preferences')
-
-    @patch('app.jwt.decode', side_effect=Exception("Invalid token"))
-    @patch('app.render_template')
-    def test_handle_auth_invalid_token(self, mock_render_template, mock_jwt_decode):
-        mock_render_template.return_value = "Error page"
-        response = self.app.get('/?token=invalid_token')
-        self.assertEqual(response.status_code, 500)
-        mock_render_template.assert_called()
-
-    @patch('app.jwt.decode', side_effect=jwt.ExpiredSignatureError())
-    @patch('app.render_template')
-    def test_handle_auth_expired_token(self, mock_render_template, mock_jwt_decode):
-        mock_render_template.return_value = "Error page"
-        response = self.app.get('/?token=expired_token')
         self.assertEqual(response.status_code, 401)
-        mock_render_template.assert_called()
+        self.assertIn(b"Error de autenticaci", response.data)
+
+    @patch('app.decode_hash')
+    def test_entry_valid_hash(self, mock_decode_hash):
+        mock_decode_hash.return_value = 123
+        response = self.app.get('/?hash=abc')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.location.endswith('/preferences'))
 
     @patch('app.guardar_respuesta')
     def test_submit_valid_preferences(self, mock_guardar_respuesta):

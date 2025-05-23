@@ -2,7 +2,7 @@ from typing import List
 from datetime import time
 
 def initialize_database():
-    from app import app
+    from said import app
     from entities import db, Profesor, Materia, Horario, BloqueHorario, Prioridad, Turno, TurnoHorario, PuedeDictar
 
     with app.app_context():

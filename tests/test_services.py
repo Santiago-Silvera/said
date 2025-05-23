@@ -12,7 +12,7 @@ from services import (
     get_previous_preferences,
     listar_turnos_materias_profesor
 )
-from app import app  # Import the Flask app
+from said import app  # Import the Flask app
 
 class TestServices(unittest.TestCase):
     def setUp(self):
