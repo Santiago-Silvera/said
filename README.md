@@ -1,4 +1,4 @@
-# Frontend Gestor de Horarios
+# Sistema Administración de Información Docente
 
 Este proyecto es una aplicación web para gestionar preferencias horarias. Los usuarios (profesores de la FIUM por el momento) pueden seleccionar sus preferencias de horarios y enviarlas para su almacenamiento en una base de datos.
 
