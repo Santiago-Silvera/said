@@ -15,8 +15,8 @@ class Persona(db.Model):
 
 class Profesor(db.Model):
     __tablename__ = 'profesores'
-    cedula = db.Column(db.String, db.ForeignKey('personas.cedula'), primary_key=True)
-    nombre = db.Column(db.String, unique=True, nullable=False)
+    cedula = db.Column(db.String, db.ForeignKey('personas.cedula'), nullable=False)
+    nombre = db.Column(db.String, primary_key=True)
     nombre_completo = db.Column(db.String, unique=True)
     ultima_modificacion = db.Column(db.DateTime, nullable=True)
     min_max_dias = db.Column(db.String, db.CheckConstraint("min_max_dias IN ('min', 'max')"))

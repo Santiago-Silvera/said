@@ -56,9 +56,20 @@ def cargar_personas_desde_excel(path_xlsx):
     # Espera columnas: 'Cedula', 'Nombre', 'Mail'
     with app.app_context():
         for _, row in df.iterrows():
-            ci = str(row['Cedula']).strip()
-            nombre = row['Nombre'].strip()
-            mail = row['Mail'].strip()
+            ci: str = str(row['Cedula']).strip()
+            nombre: str = row['Nombre']
+            if nombre is not None:
+                nombre = nombre.strip()
+            else: 
+                nombre = ""
+                print(f"Warning no name found for CI: {ci}")
+            mail = row['Mail']
+            if mail is not None:
+                mail = mail.strip()
+            else:
+                mail = ""
+                print(f"Warning no mail found for CI: {ci}")
+            print("Procesando CI:", ci)
             rol = 'profesor'  # Asignar rol por defecto
             persona = Persona(
                 cedula=ci,
