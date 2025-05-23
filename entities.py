@@ -16,7 +16,7 @@ class Persona(db.Model):
 class Profesor(db.Model):
     __tablename__ = 'profesores'
     cedula = db.Column(db.String, db.ForeignKey('personas.cedula'), nullable=False)
-    nombre = db.Column(db.String, primary_key=True)
+    nombre = db.Column(db.String, unique=True, primary_key=True)
     nombre_completo = db.Column(db.String, unique=True)
     ultima_modificacion = db.Column(db.DateTime, nullable=True)
     min_max_dias = db.Column(db.String, db.CheckConstraint("min_max_dias IN ('min', 'max')"))
@@ -85,7 +85,7 @@ class BloqueHorario(db.Model):
 
 class Prioridad(db.Model):
     __tablename__ = 'prioridades'
-    profesor = db.Column(db.String, db.ForeignKey('profesores.cedula'), primary_key=True)
+    profesor = db.Column(db.String, db.ForeignKey('profesores.nombre'), primary_key=True)
     bloque_horario = db.Column(db.Integer, db.ForeignKey('bloques_horarios.id'), primary_key=True)
     valor = db.Column(db.Integer, db.CheckConstraint("valor IN (0, 1, 2, 3)"), nullable=False)
 
@@ -130,7 +130,7 @@ class TurnoHorario(db.Model):
 
 class PuedeDictar(db.Model):
     __tablename__ = 'puede_dictar'
-    profesor = db.Column(db.String, db.ForeignKey('profesores.cedula'), primary_key=True)
+    profesor = db.Column(db.String, db.ForeignKey('profesores.nombre'), primary_key=True)
     materia = db.Column(db.String, db.ForeignKey('materias.codigo'), primary_key=True)
     turno = db.Column(db.String, db.ForeignKey('turnos.nombre'), primary_key=True)
     grupos_max = db.Column(db.Integer, db.CheckConstraint("grupos_max > 0"), default=1)

@@ -2,15 +2,19 @@ from datetime import time
 
 def initialize_database():
     from said import app
-    from entities import db, Profesor, Materia, Horario, BloqueHorario, Turno, TurnoHorario, PuedeDictar
+    from entities import db, Profesor, Materia, Horario, BloqueHorario, Turno, TurnoHorario, PuedeDictar, Persona
 
     with app.app_context():
         db.drop_all()
         db.create_all()
 
+        pers1 = Persona(cedula="1001", nombre="Juan", rol="profesor", mail="test@test.com")
+        pers2 = Persona(cedula="1002", nombre="Ana", rol="profesor")
+        db.session.add_all([pers1, pers2])
+
         # Profesores
-        prof1 = Profesor(cedula="1001", nombre="Juan", nombre_completo="Juan Pérez", mail="juan@mail.com")
-        prof2 = Profesor(cedula="1002", nombre="Ana", nombre_completo="Ana Gómez", mail="ana@mail.com")
+        prof1 = Profesor(cedula="1001", nombre="jp", nombre_completo="Juan Pérez", mail="juan@mail.com")
+        prof2 = Profesor(cedula="1002", nombre="am", nombre_completo="Ana Gómez", mail="ana@mail.com")
         db.session.add_all([prof1, prof2])
 
         # Materias
@@ -39,8 +43,8 @@ def initialize_database():
                 db.session.add(bloque)
 
         # PuedeDictar
-        pd1 = PuedeDictar(profesor="1001", materia="MAT101", turno="Mañana", grupos_max=2)
-        pd2 = PuedeDictar(profesor="1002", materia="FIS101", turno="Tarde", grupos_max=1)
+        pd1 = PuedeDictar(profesor="jp", materia="MAT101", turno="Mañana", grupos_max=2)
+        pd2 = PuedeDictar(profesor="jp", materia="FIS101", turno="Tarde", grupos_max=1)
         db.session.add_all([pd1, pd2])
 
         db.session.commit()
@@ -58,18 +62,10 @@ def cargar_personas_desde_excel(path_xlsx):
         for _, row in df.iterrows():
             ci: str = str(row['Cedula']).strip()
             nombre: str = row['Nombre']
-            if nombre is not None:
-                nombre = nombre.strip()
-            else: 
-                nombre = ""
-                print(f"Warning no name found for CI: {ci}")
             mail = row['Mail']
-            if mail is not None:
-                mail = mail.strip()
-            else:
+            if pd.isna(mail):
                 mail = ""
-                print(f"Warning no mail found for CI: {ci}")
-            print("Procesando CI:", ci)
+            print(f"CI: {ci}, Nombre: {nombre}, Mail: {mail}")
             rol = 'profesor'  # Asignar rol por defecto
             persona = Persona(
                 cedula=ci,
@@ -82,5 +78,5 @@ def cargar_personas_desde_excel(path_xlsx):
         print("Profesores cargados correctamente.")
 
 if __name__ == "__main__":
-    # initialize_database()
+    initialize_database()
     cargar_personas_desde_excel("profesores.xlsx")

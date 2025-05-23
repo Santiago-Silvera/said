@@ -4,3 +4,4 @@ venv/
 .venv/
 __pycache__/
 personas.xlsx
+profesores.xlsx
