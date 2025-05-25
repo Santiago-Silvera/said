@@ -19,8 +19,7 @@ class Profesor(db.Model):
     nombre = db.Column(db.String, unique=True, primary_key=True)
     nombre_completo = db.Column(db.String, unique=True)
     ultima_modificacion = db.Column(db.DateTime, nullable=True)
-    min_max_dias = db.Column(db.String, db.CheckConstraint("min_max_dias IN ('min', 'max')"))
-    mail = db.Column(db.String)
+    min_max_dias = db.Column(db.Boolean)
 
     # Rename the backref to avoid conflict
     preferencias = db.relationship('Prioridad', backref='profesor_pref', lazy=True)
@@ -32,11 +31,10 @@ class Profesor(db.Model):
 
 class Materia(db.Model):
     __tablename__ = 'materias'
-    codigo = db.Column(db.String, primary_key=True)
-    nombre = db.Column(db.String, unique=True, nullable=False)
+    nombre = db.Column(db.String, primary_key=True)
     nombre_completo = db.Column(db.String, unique=True)
-    cantidad_dias = db.Column(db.Integer, db.CheckConstraint("cantidad_dias IN (0, 1, 2, 3, 4, 5)"), nullable=False)
-    carga_horaria = db.Column(db.Integer, db.CheckConstraint("carga_horaria >= 0"), nullable=False)
+    # cantidad_dias = db.Column(db.Integer, db.CheckConstraint("cantidad_dias IN (0, 1, 2, 3, 4, 5)"), nullable=False)
+    # carga_horaria = db.Column(db.Integer, db.CheckConstraint("carga_horaria >= 0"), nullable=False)
 
     puede_dictar = db.relationship('PuedeDictar', backref='materia_puede_dic', lazy=True)
 
@@ -105,13 +103,13 @@ class Turno(db.Model):
 
 class TurnoHorario(db.Model):
     __tablename__ = 'turnos_horarios'
-    id = db.Column(db.Integer, db.ForeignKey('bloques_horarios.id'), primary_key=True)
     hora_inicio = db.Column(db.Time, nullable=False)
     hora_fin = db.Column(db.Time, nullable=False)
-    turno = db.Column(db.String, db.ForeignKey('turnos.nombre'), primary_key=True)
+    turno = db.Column(db.String, db.ForeignKey('turnos.nombre'))
 
     # Define foreign keys for the composite primary key in Horario
     __table_args__ = (
+        db.PrimaryKeyConstraint('hora_inicio', 'hora_fin', 'turno'),
         db.ForeignKeyConstraint(
             ['hora_inicio', 'hora_fin'],
             ['horarios.hora_inicio', 'horarios.hora_fin']
@@ -131,7 +129,7 @@ class TurnoHorario(db.Model):
 class PuedeDictar(db.Model):
     __tablename__ = 'puede_dictar'
     profesor = db.Column(db.String, db.ForeignKey('profesores.nombre'), primary_key=True)
-    materia = db.Column(db.String, db.ForeignKey('materias.codigo'), primary_key=True)
+    materia = db.Column(db.String, db.ForeignKey('materias.nombre'), primary_key=True)
     turno = db.Column(db.String, db.ForeignKey('turnos.nombre'), primary_key=True)
     grupos_max = db.Column(db.Integer, db.CheckConstraint("grupos_max > 0"), default=1)
 

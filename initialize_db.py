@@ -13,13 +13,13 @@ def initialize_database():
         db.session.add_all([pers1, pers2])
 
         # Profesores
-        prof1 = Profesor(cedula="1001", nombre="jp", nombre_completo="Juan Pérez", mail="juan@mail.com")
-        prof2 = Profesor(cedula="1002", nombre="am", nombre_completo="Ana Gómez", mail="ana@mail.com")
+        prof1 = Profesor(cedula="1001", nombre="jp", nombre_completo="Juan Pérez")
+        prof2 = Profesor(cedula="1002", nombre="am", nombre_completo="Ana Gómez")
         db.session.add_all([prof1, prof2])
 
         # Materias
-        mat1 = Materia(codigo="MAT101", nombre="Matemática", nombre_completo="Matemática Básica", cantidad_dias=2, carga_horaria=4)
-        mat2 = Materia(codigo="FIS101", nombre="Física", nombre_completo="Física General", cantidad_dias=3, carga_horaria=5)
+        mat1 = Materia(nombre="MAT101", nombre_completo="Matemática Básica")
+        mat2 = Materia(nombre="FIS101", nombre_completo="Física General")
         db.session.add_all([mat1, mat2])
 
         # Horarios
@@ -35,13 +35,14 @@ def initialize_database():
         # Bloques Horarios
         idx: int = 0
         for dia in ['lun', 'mar', 'mie', 'jue', 'vie']:
-            for t, h in zip([turno1, turno2], [hor1, hor2]):
+            for h in [hor1, hor2]:
                 bloque = BloqueHorario(id=idx, dia=dia, hora_inicio=h.hora_inicio, hora_fin=h.hora_fin)
-                turno_horario = TurnoHorario(id=idx, hora_inicio=h.hora_inicio, hora_fin=h.hora_fin, turno=t.nombre)
                 idx += 1
-                db.session.add(turno_horario)
                 db.session.add(bloque)
 
+        for t, h in zip([turno1, turno2], [hor1, hor2]):
+            turno_horario = TurnoHorario(hora_inicio=h.hora_inicio, hora_fin=h.hora_fin, turno=t.nombre)
+            db.session.add(turno_horario)
         # PuedeDictar
         pd1 = PuedeDictar(profesor="jp", materia="MAT101", turno="Mañana", grupos_max=2)
         pd2 = PuedeDictar(profesor="jp", materia="FIS101", turno="Tarde", grupos_max=1)

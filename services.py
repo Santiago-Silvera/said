@@ -138,7 +138,10 @@ def get_previous_preferences(ci):
     """
     Devuelve un diccionario {bloque_horario_id: valor} con las preferencias previas del profesor.
     """
-    preferencias = Prioridad.query.filter_by(profesor=str(ci)).all()
+    profesor = Profesor.query.filter_by(cedula=str(ci)).first()
+    if not profesor:
+        return {}
+    preferencias = Prioridad.query.filter_by(profesor=profesor.nombre).all()
     return {p.bloque_horario: p.valor for p in preferencias}
 
 
@@ -149,13 +152,12 @@ def listar_turnos_materias_profesor(ci):
     :param ci: Cédula del profesor.
     :return: Un diccionario con dos listas: 'materias' y 'turnos'.
     """
-    profesor = Profesor.query.filter_by(cedula=str(ci)).first()
+    profesor: Profesor = Profesor.query.filter_by(cedula=str(ci)).first()
     if not profesor:
         raise ValueError(f"No se encontró un profesor con la cédula {ci}")
 
     # Buscar todas las filas de PuedeDictar para este profesor
-    puede_dictar = PuedeDictar.query.filter_by(profesor=str(ci)).all()
-
+    puede_dictar = PuedeDictar.query.filter_by(profesor=profesor.nombre).all()
     lista_materias = []
     lista_turnos = set()
     codigos_materias = set()
