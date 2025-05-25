@@ -26,15 +26,11 @@
             <div class="card-body">
               <p><strong>Documento:</strong> {{ ci }}</p>
               <p><strong>Nombre:</strong> {{ professor_name }}</p>
-              <p><strong>Rol:</strong> Profesor</p>
               <hr />
               <strong>Materias asignadas:</strong>
               <ul>
                 {% for materia in materias_asignadas %}
-                <li>
-                  {{ materia.codigo }} - {{ materia.nombre }} ({{
-                  materia.carga_horaria }} hs)
-                </li>
+                <li>{{ materia.nombre_completo }}</li>
                 {% endfor %}
               </ul>
               <strong>Turnos asignados:</strong>

@@ -67,7 +67,7 @@ def obtener_bloques_horarios(turno=None):
         # Unir TurnoHorario con BloqueHorario usando el id de bloque
         bloques_horarios = (
             db.session.query(BloqueHorario)
-            .join(TurnoHorario, BloqueHorario.id == TurnoHorario.id)
+            .join(TurnoHorario, BloqueHorario.hora_inicio == TurnoHorario.hora_inicio and BloqueHorario.hora_fin == TurnoHorario.hora_fin)
             .filter(TurnoHorario.turno == turno)
             .all()
         )
@@ -163,15 +163,14 @@ def listar_turnos_materias_profesor(ci):
     codigos_materias = set()
 
     for pd in puede_dictar:
-        materia = Materia.query.filter_by(codigo=pd.materia).first()
+        materia = Materia.query.filter_by(nombre=pd.materia).first()
         turno = Turno.query.filter_by(nombre=pd.turno).first()
-        if materia and materia.codigo not in codigos_materias:
+        if materia and materia.nombre not in codigos_materias:
             lista_materias.append({
-                "codigo": materia.codigo,
                 "nombre": materia.nombre,
-                "carga_horaria": materia.carga_horaria
+                "nombre_completo": materia.nombre_completo,
             })
-            codigos_materias.add(materia.codigo)
+            codigos_materias.add(materia.nombre)
         if turno:
             lista_turnos.add(turno.nombre)
 
