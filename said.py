@@ -42,7 +42,7 @@ def index():
         return render_template('error.html', message="Usted no se encuentra registrado."), 401
 
     professor_data = get_professor_data(ci)
-    professor_name = professor_data.get('nombre')
+    professor_name = professor_data.get('nombre_completo')
 
     # Obtener materias y turnos asignados
     asignaciones = listar_turnos_materias_profesor(ci)
