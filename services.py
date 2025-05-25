@@ -28,7 +28,7 @@ def guardar_respuesta(preferences, ci):
     profesor.ultima_modificacion = db.func.now()
 
     # Eliminar preferencias previas
-    Prioridad.query.filter_by(profesor=str(ci)).delete()
+    Prioridad.query.filter_by(profesor=profesor.nombre).delete()
 
     print("services.py: Preferences to save:", preferences)
     for bloque_horario_id, valor_prioridad in preferences.items():
@@ -39,12 +39,12 @@ def guardar_respuesta(preferences, ci):
         valor_prioridad = valor_prioridad if valor_prioridad else 0
 
         # Crear o actualizar una prioridad
-        prioridad = Prioridad.query.filter_by(profesor=str(ci), bloque_horario=bloque_horario_id).first()
+        prioridad = Prioridad.query.filter_by(profesor=profesor.nombre, bloque_horario=bloque_horario_id).first()
         if prioridad:
             prioridad.valor = valor_prioridad
         else:
             nueva_prioridad = Prioridad(
-                profesor=ci,
+                profesor=profesor.nombre,
                 bloque_horario=bloque_horario_id,
                 valor=valor_prioridad
             )
