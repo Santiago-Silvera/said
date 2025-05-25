@@ -2,7 +2,7 @@ from typing import Any, List
 from entities import TurnoHorario, db, Prioridad, BloqueHorario, Profesor, Materia, Turno, PuedeDictar
 
 
-def decode_hash(encoded: int) -> int:
+def decode_hash(encoded: str) -> str:
     offset = 7  # Debe ser el mismo que en ASP
     original = ""
 

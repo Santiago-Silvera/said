@@ -37,8 +37,9 @@ db.init_app(app)
 @app.route('/preferences')
 def index():
     ci: int | Any = session.get('user_id')
+    print(f"app: index, ci: {ci}")
     if not verificar_profesor(ci):
-        return render_template('error.html', message="Usuario no autenticado. Por favor, inicie sesión."), 401
+        return render_template('error.html', message="Usted no se encuentra registrado."), 401
 
     professor_data = get_professor_data(ci)
     professor_name = professor_data.get('nombre')

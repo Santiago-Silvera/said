@@ -8,8 +8,8 @@ def initialize_database():
         db.drop_all()
         db.create_all()
 
-        pers1 = Persona(cedula="1001", nombre="Juan", rol="profesor", mail="test@test.com")
-        pers2 = Persona(cedula="1002", nombre="Ana", rol="profesor")
+        pers1 = Persona(cedula="1001", nombre="Juan", mail="test@test.com")
+        pers2 = Persona(cedula="1002", nombre="Ana")
         db.session.add_all([pers1, pers2])
 
         # Profesores
@@ -55,7 +55,7 @@ def initialize_database():
 
 def cargar_personas_desde_excel(path_xlsx):
     from said import app
-    from entities import db, Persona 
+    from entities import db, Persona, Profesor
     import pandas as pd
     df = pd.read_excel(path_xlsx)
     # Espera columnas: 'Cedula', 'Nombre', 'Mail'
@@ -67,14 +67,19 @@ def cargar_personas_desde_excel(path_xlsx):
             if pd.isna(mail):
                 mail = ""
             print(f"CI: {ci}, Nombre: {nombre}, Mail: {mail}")
-            rol = 'profesor'  # Asignar rol por defecto
             persona = Persona(
                 cedula=ci,
                 nombre=nombre,  # Primer nombre
                 mail=mail,
-                rol=rol
+            )
+            nombre = ''.join(word[0].lower() for word in nombre.split())
+            profesor = Profesor(
+                cedula=ci,
+                nombre=nombre,
+                nombre_completo=nombre,
             )
             db.session.merge(persona)  # merge para upsert
+            db.session.merge(profesor)  # merge para upsert
         db.session.commit()
         print("Profesores cargados correctamente.")
 

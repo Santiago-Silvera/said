@@ -7,7 +7,6 @@ class Persona(db.Model):
     cedula = db.Column(db.String, primary_key=True)
     nombre = db.Column(db.String, nullable=False)
     mail = db.Column(db.String, nullable=True)
-    rol = db.Column(db.String, db.CheckConstraint("rol IN ('profesor', 'administrador')"), nullable=False)
 
     def __repr__(self):
         return f'<Persona {self.cedula} - {self.nombre}>'
