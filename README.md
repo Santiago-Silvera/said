@@ -4,11 +4,9 @@ Este proyecto es una aplicación web para gestionar preferencias horarias. Los u
 
 ## Archivos principales
 
-- **`app.py`**: Archivo principal que contiene la lógica del servidor Flask.
-- **`templates/index.html`**: Plantilla HTML para la interfaz de usuario.
-- **`templates/error.html`**: Plantilla HTML para mostrar mensajes de error.
-- **`static/styles.css`**: Archivo CSS para los estilos de la aplicación.
-- **`requirements.txt`**: Lista de dependencias necesarias para ejecutar el proyecto.
+- **`said.py`**: Archivo principal que contiene la lógica del servidor Flask.
+- **`entities.py`**: Define los modelos de base de datos, incluyendo las entidades `Persona`, `Profesor`, `Materia`, `Horario`, `BloqueHorario`, `Turno`, etc.
+- **`services.py`**: Funciones de lógica de negocio y acceso a datos.
 
 ## Requisitos Previos
 
@@ -25,29 +23,25 @@ Este proyecto es una aplicación web para gestionar preferencias horarias. Los u
   POSTGRES_PASSWORD
   ```
 
-## Instalación
+## Carga de datos de prueba
 
-1. Clona este repositorio:
+Para pruebas locales, puedes usar el script `initialize_db.py` para poblar la base de datos con datos de ejemplo.  
+**¡IMPORTANTE!** Este script es solo para testing local y **no debe usarse en producción** ni en el entorno web.
 
-   ```bash
-   git clone https://github.com/Santiago-Silvera/frontend-gestor-horarios
-   cd frontend-gestor-horarios
-   ```
+También puedes utilizar el script `init.sh` en entornos locales, el cual inicializa la base de datos ejecutando `initialize_db.py` automáticamente.  
+**Ninguno de estos scripts debe usarse en producción.**
 
-2. Ejecuta el script de inicialización
+En entornos de **producción**, la aplicación debe ejecutarse usando la interfaz `wsgi.py` junto con un servidor como **nginx** y una base de datos aparte, la cual debe configurarse y poblarse de forma manual según las necesidades del entorno.
 
-En caso de sistemas basados en Unix(Linux/MacOS):
+## Importación de profesores desde Excel
 
-```bash
-bash init.sh
-```
+La importación de profesores desde archivos Excel es una funcionalidad pensada únicamente para entornos locales o de testing.  
+**No debe utilizarse en producción.**
 
-En caso de Windows:
+## Notas importantes
 
-```bash
-.\init.bat
-```
+- No uses los scripts de inicialización automática (`init.sh`, `initialize_db.py`) ni la importación desde Excel en producción.
+- En producción, configura la base de datos y los datos iniciales de manera manual y controlada.
+- Usa siempre la interfaz `wsgi.py` y un servidor web adecuado para exponer la aplicación en producción.
 
-# IMPORTANTE
-
-Verificar que el script de inicalización no llama al script initialize_db.py, este es un script de testing local y no debe usarse para iniciar el servicio web.
+---
