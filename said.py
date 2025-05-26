@@ -95,16 +95,16 @@ def entry():
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
-        # Parse JSON payload
         data = request.data
         json_data = json.loads(data.decode('utf-8'))
         preferences = json_data.get('preferences', None)
-        if not preferences:
+        min_dias = json_data.get('min_dias', False)
+        if preferences is None:
             return {"error": "Debes proporcionar preferencias."}, 400
 
-        ci = session.get('user_id')  # Use the logged-in user's ID
+        ci = session.get('user_id')
 
-        guardar_respuesta(preferences, ci)
+        guardar_respuesta(preferences, ci, min_dias)  # <-- pasa min_dias
 
         return {"success": True, "message": "Preferencias guardadas correctament"}, 200
     except json.JSONDecodeError:

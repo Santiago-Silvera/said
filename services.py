@@ -14,31 +14,26 @@ def decode_hash(encoded: str) -> str:
     return original
 
 
-def guardar_respuesta(preferences, ci):
+def guardar_respuesta(preferences, ci, min_dias=False):
     """
-    Guarda las preferencias horarias de un profesor en la base de datos.
-
-    :param preferences: Diccionario con índices de bloques horarios como claves y prioridades como valores.
-    :param ci: Cédula del profesor.
+    Guarda las preferencias horarias de un profesor en la base de datos y el valor de min_dias.
     """
     profesor: Profesor = Profesor.query.filter_by(cedula=str(ci)).first()
     if not profesor:
         raise ValueError(f"No se encontró un profesor con la cédula {ci}")
 
     profesor.ultima_modificacion = db.func.now()
+    profesor.min_max_dias = min_dias  # <-- Guarda el valor del checkbox
 
     # Eliminar preferencias previas
     Prioridad.query.filter_by(profesor=profesor.nombre).delete()
 
-    print("services.py: Preferences to save:", preferences)
     for bloque_horario_id, valor_prioridad in preferences.items():
-        # Verificar si el bloque horario existe
         bloque_horario = BloqueHorario.query.get(bloque_horario_id)
         if not bloque_horario:
             raise ValueError(f"No se encontró un bloque horario con ID {bloque_horario_id}")
         valor_prioridad = valor_prioridad if valor_prioridad else 0
 
-        # Crear o actualizar una prioridad
         prioridad = Prioridad.query.filter_by(profesor=profesor.nombre, bloque_horario=bloque_horario_id).first()
         if prioridad:
             prioridad.valor = valor_prioridad
@@ -50,7 +45,6 @@ def guardar_respuesta(preferences, ci):
             )
             db.session.add(nueva_prioridad)
 
-    # Guardar los cambios en la base de datos
     db.session.commit()
 
 def obtener_bloques_horarios(turno=None):
