@@ -127,6 +127,7 @@ def get_professor_data(ci: int):
     return {
         "nombre": profesor.nombre,
         "nombre_completo": profesor.nombre_completo,
+        "min_max_dias": profesor.min_max_dias  # <-- Agrega esto
     }
 
 def get_previous_preferences(ci):

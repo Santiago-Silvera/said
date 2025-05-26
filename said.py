@@ -43,6 +43,7 @@ def index():
 
     professor_data = get_professor_data(ci)
     professor_name = professor_data.get('nombre_completo')
+    min_max_dias = professor_data.get('min_max_dias', False)
 
     # Obtener materias y turnos asignados
     asignaciones = listar_turnos_materias_profesor(ci)
@@ -74,7 +75,8 @@ def index():
         professor_name=professor_name,
         materias_asignadas=materias_asignadas,
         turnos_asignados=turnos_asignados,
-        bloques_turno=bloques_turno
+        bloques_turno=bloques_turno,
+        min_max_dias=min_max_dias
     )
 
 
