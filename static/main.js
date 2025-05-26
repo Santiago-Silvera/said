@@ -61,3 +61,28 @@ function handleFormSubmit(event) {
       confirmation.innerHTML = `<p>Error: ${error.message}</p>`;
     });
 }
+
+function handleThemeUpdate() {
+  const getStoredTheme = () => localStorage.getItem("theme");
+  const setStoredTheme = (theme) => localStorage.setItem("theme", theme);
+
+  const getPreferredTheme = () => {
+    const storedTheme = getStoredTheme();
+    if (storedTheme) return storedTheme;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  };
+
+  const setTheme = (theme) => {
+    document.documentElement.setAttribute("data-bs-theme", theme);
+  };
+
+  // Toggle theme
+  const currentTheme =
+    document.documentElement.getAttribute("data-bs-theme") ||
+    getPreferredTheme();
+  const nextTheme = currentTheme === "dark" ? "light" : "dark";
+  setStoredTheme(nextTheme);
+  setTheme(nextTheme);
+}
