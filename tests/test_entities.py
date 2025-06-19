@@ -1,10 +1,29 @@
+"""Unit tests for the SQLAlchemy models defined in :mod:`entities`.
+
+These tests use an in-memory SQLite database to verify that the models
+behave as expected when performing common operations such as creation and
+relationship checks.
+"""
+
 from datetime import time
 import unittest
-from entities import db, Profesor, Materia, Horario, BloqueHorario, Prioridad, Turno, TurnoHorario, PuedeDictar
+from entities import (
+    db,
+    Persona,
+    Profesor,
+    Materia,
+    Horario,
+    BloqueHorario,
+    Prioridad,
+    Turno,
+    TurnoHorario,
+    PuedeDictar,
+)
 from flask import Flask
 from sqlalchemy import inspect
 
 class TestEntities(unittest.TestCase):
+    """Validate that ORM models map correctly to the database schema."""
     @classmethod
     def setUpClass(cls):
         cls.app = Flask(__name__)
@@ -27,22 +46,26 @@ class TestEntities(unittest.TestCase):
         self.ctx.pop()
 
     def test_profesor_creation(self):
-        profesor = Profesor(cedula="123", nombre="Juan", nombre_completo="Juan Perez", mail="juan@mail.com")
-        db.session.add(profesor)
+        """A :class:`Profesor` should be persisted with all basic fields."""
+        persona = Persona(cedula="123", nombre="juan", mail="juan@mail.com")
+        profesor = Profesor(cedula="123", nombre="juan", nombre_completo="Juan Perez")
+        db.session.add_all([persona, profesor])
         db.session.commit()
         found = Profesor.query.filter_by(cedula="123").first()
         self.assertIsNotNone(found)
-        self.assertEqual(found.nombre, "Juan")
+        self.assertEqual(found.nombre, "juan")
 
     def test_materia_creation(self):
-        materia = Materia(codigo="MAT101", nombre="Matemática", nombre_completo="Matemática Básica", cantidad_dias=2, carga_horaria=4)
+        """Ensure :class:`Materia` instances can be persisted."""
+        materia = Materia(nombre="MAT101", nombre_completo="Matemática Básica")
         db.session.add(materia)
         db.session.commit()
-        found = Materia.query.filter_by(codigo="MAT101").first()
+        found = Materia.query.filter_by(nombre="MAT101").first()
         self.assertIsNotNone(found)
-        self.assertEqual(found.nombre, "Matemática")
+        self.assertEqual(found.nombre_completo, "Matemática Básica")
 
     def test_horario_creation(self):
+        """`Horario` stores a pair of start and end times."""
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
         db.session.add(horario)
         db.session.commit()
@@ -51,6 +74,7 @@ class TestEntities(unittest.TestCase):
         self.assertEqual(found.hora_fin, time(10, 0))
 
     def test_bloque_horario_creation(self):
+        """Blocks combine a day with a :class:`Horario`."""
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
         db.session.add(horario)
         db.session.commit()
@@ -62,21 +86,24 @@ class TestEntities(unittest.TestCase):
         self.assertEqual(found.hora_inicio, time(8, 0))
 
     def test_prioridad_creation(self):
-        profesor = Profesor(cedula="123", nombre="Juan", nombre_completo="Juan Perez")
+        """`Prioridad` should store a professor's preference for a block."""
+        persona = Persona(cedula="123", nombre="juan")
+        profesor = Profesor(cedula="123", nombre="juan", nombre_completo="Juan Perez")
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
-        db.session.add_all([profesor, horario])
+        db.session.add_all([persona, profesor, horario])
         db.session.commit()
         bloque = BloqueHorario(dia='lun', hora_inicio=time(8, 0), hora_fin=time(10, 0))
         db.session.add(bloque)
         db.session.commit()
-        prioridad = Prioridad(profesor="123", bloque_horario=bloque.id, valor=2)
+        prioridad = Prioridad(profesor="juan", bloque_horario=bloque.id, valor=2)
         db.session.add(prioridad)
         db.session.commit()
-        found = Prioridad.query.filter_by(profesor="123").first()
+        found = Prioridad.query.filter_by(profesor="juan").first()
         self.assertIsNotNone(found)
         self.assertEqual(found.valor, 2)
 
     def test_turno_and_turnohorario_creation(self):
+        """`TurnoHorario` should correctly link a schedule with a shift."""
         turno = Turno(nombre="Mañana")
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
         db.session.add_all([turno, horario])
@@ -84,23 +111,25 @@ class TestEntities(unittest.TestCase):
         bloque = BloqueHorario(dia='lun', hora_inicio=time(8, 0), hora_fin=time(10, 0))
         db.session.add(bloque)
         db.session.commit()
-        turnohorario = TurnoHorario(id=bloque.id, hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
+        turnohorario = TurnoHorario(hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
         db.session.add(turnohorario)
         db.session.commit()
         found = TurnoHorario.query.filter_by(turno="Mañana").first()
         self.assertIsNotNone(found)
-        self.assertEqual(found.id, bloque.id)
+        self.assertEqual(found.turno, "Mañana")
 
     def test_puede_dictar_creation(self):
-        profesor = Profesor(cedula="123", nombre="Juan", nombre_completo="Juan Perez")
-        materia = Materia(codigo="MAT101", nombre="Matemática", nombre_completo="Matemática Básica", cantidad_dias=2, carga_horaria=4)
+        """`PuedeDictar` establishes which subject a professor can teach."""
+        persona = Persona(cedula="123", nombre="juan")
+        profesor = Profesor(cedula="123", nombre="juan", nombre_completo="Juan Perez")
+        materia = Materia(nombre="MAT101", nombre_completo="Matemática Básica")
         turno = Turno(nombre="Mañana")
-        db.session.add_all([profesor, materia, turno])
+        db.session.add_all([persona, profesor, materia, turno])
         db.session.commit()
-        puede = PuedeDictar(profesor="123", materia="MAT101", turno="Mañana", grupos_max=2)
+        puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana", grupos_max=2)
         db.session.add(puede)
         db.session.commit()
-        found = PuedeDictar.query.filter_by(profesor="123", materia="MAT101", turno="Mañana").first()
+        found = PuedeDictar.query.filter_by(profesor="juan", materia="MAT101", turno="Mañana").first()
         self.assertIsNotNone(found)
         self.assertEqual(found.grupos_max, 2)
 
