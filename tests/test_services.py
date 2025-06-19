@@ -4,7 +4,18 @@ from datetime import time
 import unittest
 
 from said import app
-from entities import db, Profesor, Materia, Horario, BloqueHorario, Prioridad, Turno, TurnoHorario, PuedeDictar
+from entities import (
+    db,
+    Persona,
+    Profesor,
+    Materia,
+    Horario,
+    BloqueHorario,
+    Prioridad,
+    Turno,
+    TurnoHorario,
+    PuedeDictar,
+)
 from services import (
     guardar_respuesta,
     obtener_bloques_horarios,
@@ -24,7 +35,6 @@ class TestServices(unittest.TestCase):
     def setUpClass(cls):
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        db.init_app(app)
         cls.app_context = app.app_context()
         cls.app_context.push()
 
@@ -42,14 +52,24 @@ class TestServices(unittest.TestCase):
 
     def _create_basic_data(self):
         """Insert a professor, a schedule block and related records."""
-        persona = Profesor(cedula="1", nombre="juan", nombre_completo="Juan Perez")
+        persona = Persona(cedula="1", nombre="juan")
+        profesor = Profesor(cedula="1", nombre="juan", nombre_completo="Juan Perez")
         turno = Turno(nombre="Mañana")
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
         bloque = BloqueHorario(id=1, dia="lun", hora_inicio=time(8, 0), hora_fin=time(10, 0))
         turno_horario = TurnoHorario(hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
         materia = Materia(nombre="MAT101", nombre_completo="Matemática")
         puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana")
-        db.session.add_all([persona, turno, horario, bloque, turno_horario, materia, puede])
+        db.session.add_all([
+            persona,
+            profesor,
+            turno,
+            horario,
+            bloque,
+            turno_horario,
+            materia,
+            puede,
+        ])
         db.session.commit()
 
     def test_guardar_respuesta(self):

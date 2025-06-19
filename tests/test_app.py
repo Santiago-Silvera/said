@@ -4,7 +4,18 @@ import unittest
 from datetime import time
 
 from said import app
-from entities import db, Profesor, Materia, Horario, BloqueHorario, Turno, TurnoHorario, PuedeDictar, Prioridad
+from entities import (
+    db,
+    Persona,
+    Profesor,
+    Materia,
+    Horario,
+    BloqueHorario,
+    Turno,
+    TurnoHorario,
+    PuedeDictar,
+    Prioridad,
+)
 
 
 def encode_hash(value: str, offset: int = 7) -> str:
@@ -19,7 +30,6 @@ class TestAppEndpoints(unittest.TestCase):
     def setUpClass(cls):
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        db.init_app(app)
         cls.ctx = app.app_context()
         cls.ctx.push()
 
@@ -32,6 +42,7 @@ class TestAppEndpoints(unittest.TestCase):
         db.create_all()
         self.client = app.test_client()
         # Insert minimal data
+        persona = Persona(cedula="1", nombre="juan")
         prof = Profesor(cedula="1", nombre="juan", nombre_completo="Juan Perez")
         turno = Turno(nombre="Mañana")
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
@@ -39,7 +50,16 @@ class TestAppEndpoints(unittest.TestCase):
         turno_horario = TurnoHorario(hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
         materia = Materia(nombre="MAT101", nombre_completo="Matemática")
         puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana")
-        db.session.add_all([prof, turno, horario, bloque, turno_horario, materia, puede])
+        db.session.add_all([
+            persona,
+            prof,
+            turno,
+            horario,
+            bloque,
+            turno_horario,
+            materia,
+            puede,
+        ])
         db.session.commit()
 
     def tearDown(self):

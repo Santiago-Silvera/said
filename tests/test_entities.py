@@ -9,6 +9,7 @@ from datetime import time
 import unittest
 from entities import (
     db,
+    Persona,
     Profesor,
     Materia,
     Horario,
@@ -46,8 +47,9 @@ class TestEntities(unittest.TestCase):
 
     def test_profesor_creation(self):
         """A :class:`Profesor` should be persisted with all basic fields."""
-        profesor = Profesor(cedula="123", nombre="juan", nombre_completo="Juan Perez", mail="juan@mail.com")
-        db.session.add(profesor)
+        persona = Persona(cedula="123", nombre="juan", mail="juan@mail.com")
+        profesor = Profesor(cedula="123", nombre="juan", nombre_completo="Juan Perez")
+        db.session.add_all([persona, profesor])
         db.session.commit()
         found = Profesor.query.filter_by(cedula="123").first()
         self.assertIsNotNone(found)
@@ -85,9 +87,10 @@ class TestEntities(unittest.TestCase):
 
     def test_prioridad_creation(self):
         """`Prioridad` should store a professor's preference for a block."""
+        persona = Persona(cedula="123", nombre="juan")
         profesor = Profesor(cedula="123", nombre="juan", nombre_completo="Juan Perez")
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
-        db.session.add_all([profesor, horario])
+        db.session.add_all([persona, profesor, horario])
         db.session.commit()
         bloque = BloqueHorario(dia='lun', hora_inicio=time(8, 0), hora_fin=time(10, 0))
         db.session.add(bloque)
@@ -117,10 +120,11 @@ class TestEntities(unittest.TestCase):
 
     def test_puede_dictar_creation(self):
         """`PuedeDictar` establishes which subject a professor can teach."""
+        persona = Persona(cedula="123", nombre="juan")
         profesor = Profesor(cedula="123", nombre="juan", nombre_completo="Juan Perez")
         materia = Materia(nombre="MAT101", nombre_completo="Matemática Básica")
         turno = Turno(nombre="Mañana")
-        db.session.add_all([profesor, materia, turno])
+        db.session.add_all([persona, profesor, materia, turno])
         db.session.commit()
         puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana", grupos_max=2)
         db.session.add(puede)
