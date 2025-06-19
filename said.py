@@ -5,21 +5,33 @@ import os
 import jwt
 from dotenv import load_dotenv
 from entities import db
-from services import guardar_respuesta, obtener_bloques_horarios, verificar_profesor, get_professor_data, get_previous_preferences, listar_turnos_materias_profesor, decode_hash
+from services import (
+    guardar_respuesta,
+    obtener_bloques_horarios,
+    verificar_profesor,
+    get_professor_data,
+    get_previous_preferences,
+    listar_turnos_materias_profesor,
+    decode_hash,
+)
 from datetime import timedelta
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Dynamically construct the DATABASE_URL
-POSTGRES_HOST = os.getenv('POSTGRES_HOST')
-POSTGRES_PORT = os.getenv('POSTGRES_PORT')
-POSTGRES_DB = os.getenv('POSTGRES_DB')
-POSTGRES_USER = os.getenv('POSTGRES_USER')
-POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-
-DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+# Dynamically construct the database connection string.
+# If ``DATABASE_URL`` is already defined, use it directly (useful for tests)
+# otherwise build the PostgreSQL URL from individual parameters.
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+    POSTGRES_DB = os.getenv("POSTGRES_DB")
+    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    DATABASE_URL = (
+        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+    )
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
@@ -36,6 +48,7 @@ db.init_app(app)
 
 @app.route('/preferences')
 def index():
+    """Render the preferences form for the logged in professor."""
     ci: int | Any = session.get('user_id')
     print(f"app: index, ci: {ci}")
     if not verificar_profesor(ci):
@@ -82,6 +95,7 @@ def index():
 
 @app.route('/')
 def entry():
+    """Entry point that authenticates the user using a legacy hash."""
     hash_code = request.args.get('hash')
     if not hash_code:
         return render_template('error.html', message="Error de autenticación."), 401
@@ -96,6 +110,7 @@ def entry():
 
 @app.route('/submit', methods=['POST'])
 def submit():
+    """Persist the submitted preferences for the current professor."""
     try:
         data = request.data
         json_data = json.loads(data.decode('utf-8'))
@@ -117,6 +132,7 @@ def submit():
 
 @app.route('/auth')
 def handle_auth():
+    """Handle JWT based authentication used by the external portal."""
     token = request.args.get('token')
     if not token:
         # Serve the error.html template for missing token

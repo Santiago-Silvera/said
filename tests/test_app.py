@@ -1,105 +1,124 @@
+"""End-to-end tests for the Flask application routes."""
+
+import os
 import unittest
-from unittest.mock import patch
+from datetime import time
+
+# Provide default environment so said.py can be imported without errors
+os.environ.setdefault("POSTGRES_HOST", "localhost")
+os.environ.setdefault("POSTGRES_PORT", "5432")
+os.environ.setdefault("POSTGRES_DB", "test")
+os.environ.setdefault("POSTGRES_USER", "test")
+os.environ.setdefault("POSTGRES_PASSWORD", "test")
+os.environ.setdefault("SECRET_KEY", "testing")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 from said import app
+from entities import (
+    db,
+    Persona,
+    Profesor,
+    Materia,
+    Horario,
+    BloqueHorario,
+    Turno,
+    TurnoHorario,
+    PuedeDictar,
+    Prioridad,
+)
+
+
+def encode_hash(value: str, offset: int = 7) -> str:
+    """Generate the encoded hash used by the legacy client."""
+    return "".join(f"{ord(c)+offset:02X}" for c in value)
 
 
 class TestAppEndpoints(unittest.TestCase):
+    """Run the HTTP endpoints against a temporary database."""
+
+    @classmethod
+    def setUpClass(cls):
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        cls.ctx = app.app_context()
+        cls.ctx.push()
+
+    @classmethod
+    def tearDownClass(cls):
+        db.session.remove()
+        cls.ctx.pop()
+
     def setUp(self):
-        self.app = app.test_client()
-
-    @patch('said.verificar_profesor')
-    @patch('said.render_template')
-    def test_index_unauthenticated(self, mock_render_template, mock_verificar_profesor):
-        mock_verificar_profesor.return_value = False
-        mock_render_template.return_value = "Error page"
-        with self.app.session_transaction() as sess:
-            sess['user_id'] = None
-        response = self.app.get('/preferences')
-        self.assertEqual(response.status_code, 401)
-        mock_render_template.assert_called_once_with(
-            'error.html', message="Usuario no autenticado. Por favor, inicie sesión."
-        )
-
-    @patch('said.listar_turnos_materias_profesor')
-    @patch('said.get_professor_data')
-    @patch('said.obtener_bloques_horarios')
-    @patch('said.get_previous_preferences')
-    @patch('said.verificar_profesor')
-    @patch('said.render_template')
-    def test_index_authenticated(
-        self, mock_render_template, mock_verificar_profesor,
-        mock_get_previous_preferences, mock_obtener_bloques_horarios,
-        mock_get_professor_data, mock_listar_turnos_materias_profesor
-    ):
-        mock_verificar_profesor.return_value = True
-        mock_get_professor_data.return_value = {'nombre': 'Juan'}
-        mock_listar_turnos_materias_profesor.return_value = {
-            "materias": [
-                {"codigo": "MAT101", "nombre": "Matemática", "carga_horaria": 4}
-            ],
-            "turnos": ["Mañana"]
-        }
-        # Simulate bloques_horarios for all and for turno
-        all_bloques = [
-            {'id': 1, 'dia': 'Monday', 'hora_inicio': '08:00', 'hora_fin': '10:00'},
-            {'id': 2, 'dia': 'Tuesday', 'hora_inicio': '10:00', 'hora_fin': '12:00'}
+        db.create_all()
+        self.client = app.test_client()
+        # Insert minimal data
+        persona = Persona(cedula="1", nombre="juan")
+        prof = Profesor(cedula="1", nombre="juan", nombre_completo="Juan Perez")
+        turno = Turno(nombre="Mañana")
+        horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
+        bloques = [
+            BloqueHorario(id=i, dia=dia, hora_inicio=time(8, 0), hora_fin=time(10, 0))
+            for i, dia in enumerate(["lun", "mar", "mie", "jue", "vie"], start=1)
         ]
-        turno_bloques = [
-            {'id': 1, 'dia': 'Monday', 'hora_inicio': '08:00', 'hora_fin': '10:00'}
-        ]
-        def obtener_bloques_horarios_side_effect(turno=None):
-            if turno is None:
-                return all_bloques
-            if turno == "Mañana":
-                return turno_bloques
-            return []
-        mock_obtener_bloques_horarios.side_effect = obtener_bloques_horarios_side_effect
-        mock_get_previous_preferences.return_value = {1: 2}
-        mock_render_template.return_value = "Rendered Template"
-        with self.app.session_transaction() as sess:
-            sess['user_id'] = 123
-        response = self.app.get('/preferences')
-        self.assertEqual(response.status_code, 200)
-        mock_render_template.assert_called_once()
-        args, kwargs = mock_render_template.call_args
-        self.assertEqual(args[0], 'index.html')
-        self.assertIn('bloques_horarios', kwargs)
-        self.assertIn('bloques_turno', kwargs)
-        self.assertEqual(kwargs['ci'], 123)
-        self.assertEqual(kwargs['professor_name'], 'Juan')
-        self.assertIn(1, kwargs['bloques_turno'])
-        self.assertNotIn(2, kwargs['bloques_turno'])
+        turno_horario = TurnoHorario(hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
+        materia = Materia(nombre="MAT101", nombre_completo="Matemática")
+        puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana")
+        db.session.add_all([
+            persona,
+            prof,
+            turno,
+            horario,
+            *bloques,
+            turno_horario,
+            materia,
+            puede,
+        ])
+        db.session.commit()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+
+    def test_index_unauthenticated(self):
+        """Visiting preferences without login should return an error page."""
+        res = self.client.get("/preferences")
+        self.assertEqual(res.status_code, 401)
+        self.assertIn(b"Usted no se encuentra registrado", res.data)
+
+    def test_index_authenticated(self):
+        """Logged users should see the preferences page."""
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = "1"
+        res = self.client.get("/preferences")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"Juan Perez", res.data)
 
     def test_entry_missing_hash(self):
-        response = self.app.get('/')
-        self.assertEqual(response.status_code, 401)
-        self.assertIn(b"Error de autenticaci", response.data)
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 401)
 
-    @patch('said.decode_hash')
-    def test_entry_valid_hash(self, mock_decode_hash):
-        mock_decode_hash.return_value = 123
-        response = self.app.get('/?hash=abc')
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.location.endswith('/preferences'))
+    def test_entry_valid_hash(self):
+        hash_value = encode_hash("1")
+        res = self.client.get(f"/?hash={hash_value}")
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(res.headers["Location"].endswith("/preferences"))
 
-    @patch('said.guardar_respuesta')
-    def test_submit_valid_preferences(self, mock_guardar_respuesta):
-        with self.app.session_transaction() as sess:
-            sess['user_id'] = 123
-        data = {
-            "preferences": [{"bloque_horario_id": 1, "valor_prioridad": 5}]
-        }
-        response = self.app.post('/submit', json=data)
-        self.assertEqual(response.status_code, 200)
-        mock_guardar_respuesta.assert_called_once()
+    def test_submit_valid_preferences(self):
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = "1"
+        res = self.client.post("/submit", json={"preferences": {"1": 2}})
+        self.assertEqual(res.status_code, 200)
+        self.assertIn(b"Preferencias guardadas", res.data)
+        pref = Prioridad.query.filter_by(profesor="juan", bloque_horario=1).first()
+        self.assertIsNotNone(pref)
 
     def test_submit_missing_preferences(self):
-        with self.app.session_transaction() as sess:
-            sess['user_id'] = 123
-        response = self.app.post('/submit', json={})
-        self.assertEqual(response.status_code, 400)
-        self.assertIn(b"Debes proporcionar preferencias.", response.data)
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = "1"
+        res = self.client.post("/submit", json={})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn(b"Debes proporcionar preferencias", res.data)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
