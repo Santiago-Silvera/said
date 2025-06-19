@@ -1,7 +1,17 @@
 """Integration tests for service layer functions."""
 
+import os
 from datetime import time
 import unittest
+
+# Provide default environment so said.py can be imported without errors
+os.environ.setdefault("POSTGRES_HOST", "localhost")
+os.environ.setdefault("POSTGRES_PORT", "5432")
+os.environ.setdefault("POSTGRES_DB", "test")
+os.environ.setdefault("POSTGRES_USER", "test")
+os.environ.setdefault("POSTGRES_PASSWORD", "test")
+os.environ.setdefault("SECRET_KEY", "testing")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 from said import app
 from entities import (
@@ -56,7 +66,10 @@ class TestServices(unittest.TestCase):
         profesor = Profesor(cedula="1", nombre="juan", nombre_completo="Juan Perez")
         turno = Turno(nombre="Mañana")
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
-        bloque = BloqueHorario(id=1, dia="lun", hora_inicio=time(8, 0), hora_fin=time(10, 0))
+        bloques = [
+            BloqueHorario(id=i, dia=dia, hora_inicio=time(8, 0), hora_fin=time(10, 0))
+            for i, dia in enumerate(["lun", "mar", "mie", "jue", "vie"], start=1)
+        ]
         turno_horario = TurnoHorario(hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
         materia = Materia(nombre="MAT101", nombre_completo="Matemática")
         puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana")
@@ -65,7 +78,7 @@ class TestServices(unittest.TestCase):
             profesor,
             turno,
             horario,
-            bloque,
+            *bloques,
             turno_horario,
             materia,
             puede,
@@ -85,8 +98,8 @@ class TestServices(unittest.TestCase):
         self._create_basic_data()
         all_blocks = obtener_bloques_horarios()
         morning = obtener_bloques_horarios("Mañana")
-        self.assertEqual(len(all_blocks), 1)
-        self.assertEqual(len(morning), 1)
+        self.assertEqual(len(all_blocks), 5)
+        self.assertEqual(len(morning), 5)
         self.assertEqual(all_blocks[0]["id"], 1)
 
     def test_verificar_profesor(self):

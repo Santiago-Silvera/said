@@ -5,21 +5,33 @@ import os
 import jwt
 from dotenv import load_dotenv
 from entities import db
-from services import guardar_respuesta, obtener_bloques_horarios, verificar_profesor, get_professor_data, get_previous_preferences, listar_turnos_materias_profesor, decode_hash
+from services import (
+    guardar_respuesta,
+    obtener_bloques_horarios,
+    verificar_profesor,
+    get_professor_data,
+    get_previous_preferences,
+    listar_turnos_materias_profesor,
+    decode_hash,
+)
 from datetime import timedelta
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Dynamically construct the DATABASE_URL
-POSTGRES_HOST = os.getenv('POSTGRES_HOST')
-POSTGRES_PORT = os.getenv('POSTGRES_PORT')
-POSTGRES_DB = os.getenv('POSTGRES_DB')
-POSTGRES_USER = os.getenv('POSTGRES_USER')
-POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-
-DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+# Dynamically construct the database connection string.
+# If ``DATABASE_URL`` is already defined, use it directly (useful for tests)
+# otherwise build the PostgreSQL URL from individual parameters.
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+    POSTGRES_DB = os.getenv("POSTGRES_DB")
+    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    DATABASE_URL = (
+        f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+    )
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 

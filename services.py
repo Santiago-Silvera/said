@@ -97,9 +97,8 @@ def listar_materias():
     materias: List[Any] = Materia.query.all()
     return [
         {
-            "codigo": materia.codigo,
             "nombre": materia.nombre,
-            "carga_horaria": materia.carga_horaria
+            "nombre_completo": materia.nombre_completo,
         }
         for materia in materias
     ]

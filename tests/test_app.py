@@ -1,7 +1,17 @@
 """End-to-end tests for the Flask application routes."""
 
+import os
 import unittest
 from datetime import time
+
+# Provide default environment so said.py can be imported without errors
+os.environ.setdefault("POSTGRES_HOST", "localhost")
+os.environ.setdefault("POSTGRES_PORT", "5432")
+os.environ.setdefault("POSTGRES_DB", "test")
+os.environ.setdefault("POSTGRES_USER", "test")
+os.environ.setdefault("POSTGRES_PASSWORD", "test")
+os.environ.setdefault("SECRET_KEY", "testing")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 from said import app
 from entities import (
@@ -46,7 +56,10 @@ class TestAppEndpoints(unittest.TestCase):
         prof = Profesor(cedula="1", nombre="juan", nombre_completo="Juan Perez")
         turno = Turno(nombre="Mañana")
         horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
-        bloque = BloqueHorario(id=1, dia="lun", hora_inicio=time(8, 0), hora_fin=time(10, 0))
+        bloques = [
+            BloqueHorario(id=i, dia=dia, hora_inicio=time(8, 0), hora_fin=time(10, 0))
+            for i, dia in enumerate(["lun", "mar", "mie", "jue", "vie"], start=1)
+        ]
         turno_horario = TurnoHorario(hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
         materia = Materia(nombre="MAT101", nombre_completo="Matemática")
         puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana")
@@ -55,7 +68,7 @@ class TestAppEndpoints(unittest.TestCase):
             prof,
             turno,
             horario,
-            bloque,
+            *bloques,
             turno_horario,
             materia,
             puede,
