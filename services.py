@@ -3,6 +3,7 @@ from entities import TurnoHorario, db, Prioridad, BloqueHorario, Profesor, Mater
 
 
 def decode_hash(encoded: str) -> str:
+    """Decode the hexadecimal hash used by the ASP application."""
     offset = 7  # Debe ser el mismo que en ASP
     original = ""
 
