@@ -3,6 +3,7 @@ from entities import TurnoHorario, db, Prioridad, BloqueHorario, Profesor, Mater
 
 
 def decode_hash(encoded: str) -> str:
+    """Decode the hexadecimal hash used by the ASP application."""
     offset = 7  # Debe ser el mismo que en ASP
     original = ""
 
@@ -96,9 +97,8 @@ def listar_materias():
     materias: List[Any] = Materia.query.all()
     return [
         {
-            "codigo": materia.codigo,
             "nombre": materia.nombre,
-            "carga_horaria": materia.carga_horaria
+            "nombre_completo": materia.nombre_completo,
         }
         for materia in materias
     ]

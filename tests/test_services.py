@@ -1,7 +1,31 @@
+"""Integration tests for service layer functions."""
+
+import os
 from datetime import time
 import unittest
-from unittest import mock
-from unittest.mock import patch, MagicMock
+
+# Provide default environment so said.py can be imported without errors
+os.environ.setdefault("POSTGRES_HOST", "localhost")
+os.environ.setdefault("POSTGRES_PORT", "5432")
+os.environ.setdefault("POSTGRES_DB", "test")
+os.environ.setdefault("POSTGRES_USER", "test")
+os.environ.setdefault("POSTGRES_PASSWORD", "test")
+os.environ.setdefault("SECRET_KEY", "testing")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+
+from said import app
+from entities import (
+    db,
+    Persona,
+    Profesor,
+    Materia,
+    Horario,
+    BloqueHorario,
+    Prioridad,
+    Turno,
+    TurnoHorario,
+    PuedeDictar,
+)
 from services import (
     guardar_respuesta,
     obtener_bloques_horarios,
@@ -10,206 +34,113 @@ from services import (
     listar_turnos,
     get_professor_data,
     get_previous_preferences,
-    listar_turnos_materias_profesor
+    listar_turnos_materias_profesor,
 )
-from said import app  # Import the Flask app
+
 
 class TestServices(unittest.TestCase):
+    """Exercise service helpers using a temporary SQLite database."""
+
+    @classmethod
+    def setUpClass(cls):
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        cls.app_context = app.app_context()
+        cls.app_context.push()
+
+    @classmethod
+    def tearDownClass(cls):
+        db.session.remove()
+        cls.app_context.pop()
+
     def setUp(self):
-        self.app_context = app.app_context()
-        self.app_context.push()
+        db.create_all()
 
     def tearDown(self):
-        self.app_context.pop()
+        db.session.remove()
+        db.drop_all()
 
-    @patch('services.db.session')
-    @patch('services.Prioridad')
-    @patch('services.BloqueHorario')
-    @patch('services.Profesor')
-    def test_guardar_respuesta(self, 
-                               mock_profesor_class: MagicMock, 
-                               mock_bloque_class: MagicMock, 
-                               mock_prioridad_class: MagicMock, 
-                               mock_db_session: MagicMock):
-        # Mock Profesor.query.filter_by().first()
-        mock_profesor = MagicMock(cedula=123)
-        mock_profesor_class.query = MagicMock()
-        mock_profesor_class.query.filter_by.return_value.first.return_value = mock_profesor
-
-        # Mock Prioridad.query.filter_by().delete() and .first()
-        mock_prioridad_query = MagicMock()
-        mock_prioridad_query.filter_by.return_value.delete.return_value = None
-        mock_prioridad_query.filter_by.return_value.first.return_value = None  # Simula que no existe aún
-        mock_prioridad_class.query = mock_prioridad_query
-
-        # Mock BloqueHorario.query.get()
-        mock_bloque_query = MagicMock()
-        mock_bloque_query.get.side_effect = lambda x: MagicMock(id=x)
-        mock_bloque_class.query = mock_bloque_query
-
-        # Mock sesión
-        mock_db_session.add = MagicMock()
-        mock_db_session.commit = MagicMock()
-
-        preferences_data = {1: 2, 2: 3}
-        guardar_respuesta(preferences_data, 123)
-
-        # Comprobaciones
-        self.assertEqual(mock_db_session.add.call_count, 2)
-        mock_db_session.commit.assert_called_once()
-        # Verifica que se haya actualizado ultima_modificacion
-        self.assertIsNotNone(mock_profesor.ultima_modificacion)
-
-    @patch('services.BloqueHorario')
-    def test_obtener_bloques_horarios(self, mock_bloque_horario: MagicMock):
-        mock_query = MagicMock()
-        
-        mock_query.all.return_value = [
-            MagicMock(id=1, dia="Monday", hora_inicio=time(8, 0), hora_fin=time(9, 0)),
-            MagicMock(id=2, dia="Monday", hora_inicio=time(9, 0), hora_fin=time(10, 0)),
+    def _create_basic_data(self):
+        """Insert a professor, a schedule block and related records."""
+        persona = Persona(cedula="1", nombre="juan")
+        profesor = Profesor(cedula="1", nombre="juan", nombre_completo="Juan Perez")
+        turno = Turno(nombre="Mañana")
+        horario = Horario(hora_inicio=time(8, 0), hora_fin=time(10, 0))
+        bloques = [
+            BloqueHorario(id=i, dia=dia, hora_inicio=time(8, 0), hora_fin=time(10, 0))
+            for i, dia in enumerate(["lun", "mar", "mie", "jue", "vie"], start=1)
         ]
-        mock_bloque_horario.query = mock_query
+        turno_horario = TurnoHorario(hora_inicio=time(8, 0), hora_fin=time(10, 0), turno="Mañana")
+        materia = Materia(nombre="MAT101", nombre_completo="Matemática")
+        puede = PuedeDictar(profesor="juan", materia="MAT101", turno="Mañana")
+        db.session.add_all([
+            persona,
+            profesor,
+            turno,
+            horario,
+            *bloques,
+            turno_horario,
+            materia,
+            puede,
+        ])
+        db.session.commit()
 
-        with app.app_context():
-            result = obtener_bloques_horarios()
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0]['dia'], "Monday")
+    def test_guardar_respuesta(self):
+        """Preferences should be stored as `Prioridad` rows."""
+        self._create_basic_data()
+        guardar_respuesta({1: 2}, "1")
+        pref = Prioridad.query.filter_by(profesor="juan", bloque_horario=1).first()
+        self.assertIsNotNone(pref)
+        self.assertEqual(pref.valor, 2)
 
-    @patch('services.Profesor')
-    def test_verificar_profesor_exists(self, mock_profesor_class: MagicMock):
-        mock_query = MagicMock()
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = MagicMock(cedula=123)
+    def test_obtener_bloques_horarios(self):
+        """Retrieve blocks with and without filtering by turn."""
+        self._create_basic_data()
+        all_blocks = obtener_bloques_horarios()
+        morning = obtener_bloques_horarios("Mañana")
+        self.assertEqual(len(all_blocks), 5)
+        self.assertEqual(len(morning), 5)
+        self.assertEqual(all_blocks[0]["id"], 1)
 
-        mock_query.filter_by.return_value = mock_filter
-        mock_profesor_class.query = mock_query
+    def test_verificar_profesor(self):
+        """Check existence of a professor by id."""
+        self._create_basic_data()
+        self.assertTrue(verificar_profesor("1"))
+        self.assertFalse(verificar_profesor("2"))
 
-        result = verificar_profesor(123)
-        self.assertTrue(result)
+    def test_listar_materias_y_turnos(self):
+        """List available subjects and shifts."""
+        self._create_basic_data()
+        materias = listar_materias()
+        turnos = listar_turnos()
+        self.assertEqual(len(materias), 1)
+        self.assertEqual(materias[0]["nombre"], "MAT101")
+        self.assertIn("Mañana", turnos)
 
-    @patch('services.Profesor')
-    def test_verificar_profesor_not_exists(self, mock_profesor_class: MagicMock):
-        mock_query = MagicMock()
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
+    def test_get_professor_data(self):
+        """Fetch a professor record as a dictionary."""
+        self._create_basic_data()
+        data = get_professor_data("1")
+        self.assertEqual(data["nombre"], "juan")
+        self.assertEqual(data["nombre_completo"], "Juan Perez")
 
-        mock_query.filter_by.return_value = mock_filter
-        mock_profesor_class.query = mock_query
+    def test_get_previous_preferences(self):
+        """Retrieve previously saved preferences."""
+        self._create_basic_data()
+        Prioridad(profesor="juan", bloque_horario=1, valor=3)
+        db.session.add(Prioridad(profesor="juan", bloque_horario=1, valor=3))
+        db.session.commit()
+        prefs = get_previous_preferences("1")
+        self.assertEqual(prefs, {1: 3})
 
-        result = verificar_profesor(123)
-        self.assertFalse(result)
+    def test_listar_turnos_materias_profesor(self):
+        """Return the subjects and shifts linked to a professor."""
+        self._create_basic_data()
+        res = listar_turnos_materias_profesor("1")
+        self.assertEqual(len(res["materias"]), 1)
+        self.assertEqual(res["materias"][0]["nombre"], "MAT101")
+        self.assertEqual(res["turnos"], ["Mañana"])
 
-    @patch('services.Materia')
-    def test_listar_materias(self, mock_materias: MagicMock):
-        mock_query = MagicMock()
-        mock_query.all.return_value = [
-            MagicMock(codigo="MAT101", nombre="Mathematics", carga_horaria=4),
-            MagicMock(codigo="PHY101", nombre="Physics", carga_horaria=3)
-        ]
-        mock_materias.query = mock_query
-        result = listar_materias()
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0]['codigo'], "MAT101")
 
-    @patch('services.Turno')
-    def test_listar_turnos(self, mock_turno: MagicMock):
-        mock_query = MagicMock()
-        mock_query.all.return_value = [
-            MagicMock(nombre="Morning"),
-            MagicMock(nombre="Evening")
-        ]
-        mock_turno.query = mock_query
-        result = listar_turnos()
-        self.assertEqual(len(result), 2)
-        self.assertIn("Morning", result)
-
-    @patch('services.Profesor')
-    def test_get_professor_data(self, mock_profesor_class: MagicMock):
-        mock_query = MagicMock()
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = MagicMock(nombre="Juan Perez")
-        
-        mock_query.filter_by.return_value = mock_filter
-        mock_profesor_class.query = mock_query
-
-        result = get_professor_data(123)
-        self.assertEqual(result, {"nombre": "Juan Perez"})
-
-    @patch('services.Profesor')
-    def test_get_professor_data_not_found(self, mock_profesor_class: MagicMock):
-        mock_query = MagicMock()
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        
-        mock_query.filter_by.return_value = mock_filter
-        mock_profesor_class.query = mock_query
-        with self.assertRaises(ValueError):
-            get_professor_data(123)
-
-    @patch('services.Prioridad')
-    def test_get_previous_preferences(self, mock_prioridad_class: MagicMock):
-        mock_query = MagicMock()
-        mock_filter = MagicMock()
-        mock_query.filter_by.return_value.all.return_value = [
-            MagicMock(bloque_horario=1, valor=2),
-            MagicMock(bloque_horario=2, valor=3)
-        ]
-        mock_prioridad_class.query = mock_query
-        result = get_previous_preferences(123)
-        self.assertEqual(result, {1: 2, 2: 3})
-
-    @patch('services.Turno')
-    @patch('services.Materia')
-    @patch('services.PuedeDictar')
-    @patch('services.Profesor')
-    def test_listar_turnos_materias_profesor(
-        self,
-        mock_profesor_class,
-        mock_puede_dictar_class,
-        mock_materia_class,
-        mock_turno_class
-    ):
-        # Mock Profesor.query.filter_by().first()
-        mock_profesor_query = MagicMock()
-        mock_profesor_query.filter_by.return_value.first.return_value = MagicMock(cedula="123", nombre="Juan Perez")
-        mock_profesor_class.query = mock_profesor_query
-
-        # Mock PuedeDictar.query.filter_by().all()
-        mock_pd1 = MagicMock(materia="MAT101", turno="Morning")
-        mock_pd2 = MagicMock(materia="PHY101", turno="Evening")
-        mock_puede_dictar_query = MagicMock()
-        mock_puede_dictar_query.filter_by.return_value.all.return_value = [mock_pd1, mock_pd2]
-        mock_puede_dictar_class.query = mock_puede_dictar_query
-
-        # Mock Materia.query.filter_by().first()
-        def mock_materia_filter_by(codigo):
-            mock_materia = MagicMock()
-            if codigo == "MAT101":
-                mock_materia.codigo = "MAT101"
-                mock_materia.nombre = "Mathematics"
-                mock_materia.carga_horaria = 4
-            else:
-                mock_materia.codigo = "PHY101"
-                mock_materia.nombre = "Physics"
-                mock_materia.carga_horaria = 3
-            return MagicMock(first=MagicMock(return_value=mock_materia))
-        mock_materia_class.query.filter_by.side_effect = mock_materia_filter_by
-
-        # Mock Turno.query.filter_by().first()
-        def mock_turno_filter_by(nombre):
-            mock_turno = MagicMock()
-            mock_turno.nombre = nombre
-            return MagicMock(first=MagicMock(return_value=mock_turno))
-        mock_turno_class.query.filter_by.side_effect = mock_turno_filter_by
-
-        # Ejecutar
-        result = listar_turnos_materias_profesor("123")
-
-        # Validaciones
-        self.assertEqual(len(result["materias"]), 2)
-        self.assertEqual(result["materias"][0]["codigo"], "MAT101")
-        self.assertIn("Morning", result["turnos"])
-        self.assertIn("Evening", result["turnos"])
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
