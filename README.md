@@ -44,4 +44,26 @@ La importación de profesores desde archivos Excel es una funcionalidad pensada 
 - En producción, configura la base de datos y los datos iniciales de manera manual y controlada.
 - Usa siempre la interfaz `wsgi.py` y un servidor web adecuado para exponer la aplicación en producción.
 
+## Local Development with Docker Compose
+
+1. **Start backend and database:**
+   ```sh
+   docker-compose up --build
+   ```
+   This will build and start both the backend and the PostgreSQL database.
+
+2. **Run tests:**
+   ```sh
+   docker-compose run --rm backend bash -c "python -m unittest discover -s tests"
+   ```
+   This will run your unittests inside the backend container.
+
+3. **Stop containers:**
+   ```sh
+   docker-compose down
+   ```
+   This will stop and remove all running containers.
+
+> Make sure Docker and Docker Compose are installed on your machine.
+
 ---
