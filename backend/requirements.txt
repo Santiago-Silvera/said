@@ -1,0 +1,12 @@
+flask
+python-dotenv
+pyjwt
+sqlalchemy
+flask_sqlalchemy
+psycopg2-binary
+flask-cors
+gunicorn
+alembic
+pandas
+openpyxl
+bcrypt

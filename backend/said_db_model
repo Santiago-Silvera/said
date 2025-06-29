@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+ Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="0.9.4" use-changelog="false" last-position="267,288" last-zoom="0.85" max-obj-count="18"
+	 default-schema="public" default-owner="postgres"
+	 layers="Default layer"
+	 active-layers="0"
+	 layer-name-colors="#000000"
+	 layer-rect-colors="#b4b4b4"
+	 show-layer-names="false" show-layer-rects="false">
+<database name="new_database" is-template="false" allow-conns="true">
+</database>
+
+<schema name="public" layers="0" fill-color="#e1e1e1" sql-disabled="true">
+</schema>
+
+<schema name="said" layers="0" rect-visible="true" fill-color="#e1e1e1">
+	<role name="postgres"/>
+</schema>
+
+<table name="PERSONAS" layers="0" collapse-mode="2" max-obj-count="8" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="920" y="60"/>
+	<column name="id_persona" not-null="true">
+		<type name="bigserial" length="0"/>
+	</column>
+	<column name="nombres" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="apellidos" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="fecha_nacimiento" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="email_um">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="email_personal" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="telefono" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<constraint name="PERS_PK" type="pk-constr" table="said.&quot;PERSONAS&quot;">
+		<columns names="id_persona" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="DOCUMENTOS_PERSONAS" layers="0" alias="DOCSPERS" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1400" y="40"/>
+	<column name="nro_documento" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="tipo_documento" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="cod_pais" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="id_pers" not-null="true">
+		<type name="bigint" length="0"/>
+	</column>
+	<constraint name="DOCSPERS_PK" type="pk-constr" table="said.&quot;DOCUMENTOS_PERSONAS&quot;">
+		<columns names="nro_documento,tipo_documento,cod_pais" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="MATERIAS" layers="0" collapse-mode="2" max-obj-count="7" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1100" y="940"/>
+	<column name="cod_materia" not-null="true">
+		<type name="varchar" length="7"/>
+	</column>
+	<column name="nombre" not-null="true">
+		<type name="varchar" length="30"/>
+	</column>
+	<column name="creditos" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="horas_clase" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="horas_laboratorio" not-null="true" default-value="0">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="horas_semanales" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<constraint name="MATERIAS_PK" type="pk-constr" table="said.&quot;MATERIAS&quot;">
+		<columns names="cod_materia" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="CURSOS" layers="0" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1440" y="1220"/>
+	<column name="id_curso" not-null="true">
+		<type name="bigserial" length="0"/>
+	</column>
+	<column name="cod_materia" not-null="true">
+		<type name="varchar" length="7"/>
+	</column>
+	<column name="semestre" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="anio" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<constraint name="CURSOS_SEMESTRE_CHK" type="ck-constr" table="said.&quot;CURSOS&quot;">
+			<expression><![CDATA[semestre IN (1, 2)]]></expression>
+	</constraint>
+	<constraint name="CURSOS_ANIO_CHK" type="ck-constr" table="said.&quot;CURSOS&quot;">
+			<expression><![CDATA[anio > 2000]]></expression>
+	</constraint>
+	<constraint name="CURSOS_PK" type="pk-constr" table="said.&quot;CURSOS&quot;">
+		<columns names="id_curso" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="CARRERAS" layers="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1840" y="640"/>
+	<column name="id_carrera" not-null="true">
+		<type name="serial" length="0"/>
+	</column>
+	<column name="nombre" not-null="true">
+		<type name="varchar" length="30"/>
+	</column>
+	<column name="duracion" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<constraint name="CARRERA_NOMBRE_UK" type="uq-constr" table="said.&quot;CARRERAS&quot;">
+		<columns names="nombre" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="CARRERAR_DURACION_CHK" type="ck-constr" table="said.&quot;CARRERAS&quot;">
+			<expression><![CDATA[duracion <= 5]]></expression>
+	</constraint>
+	<constraint name="CARRERAS_PK" type="pk-constr" table="said.&quot;CARRERAS&quot;">
+		<columns names="id_carrera" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="PLANES_ESTUDIO" layers="0" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1440" y="620"/>
+	<column name="cod_materia" not-null="true">
+		<type name="varchar" length="7"/>
+	</column>
+	<column name="id_carrera" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<column name="plan" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="semestre" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<constraint name="PLANEST_PLAN_CHK" type="ck-constr" table="said.&quot;PLANES_ESTUDIO&quot;">
+			<expression><![CDATA[plan > 2000]]></expression>
+	</constraint>
+	<constraint name="PLANEST_PK" type="pk-constr" table="said.&quot;PLANES_ESTUDIO&quot;">
+		<columns names="cod_materia,id_carrera,plan" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="CURSOS_CARRERAS" layers="0" alias="CURSCCARR" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1720" y="920"/>
+	<column name="id_curso" not-null="true">
+		<type name="bigint" length="0"/>
+	</column>
+	<column name="id_carrera" not-null="true">
+		<type name="integer" length="0"/>
+	</column>
+	<constraint name="CURSCARR_PK" type="pk-constr" table="said.&quot;CURSOS_CARRERAS&quot;">
+		<columns names="id_curso,id_carrera" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="PROFESORES" layers="0" alias="PROFES" collapse-mode="2" max-obj-count="6" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="400" y="300"/>
+	<column name="id_persona" not-null="true">
+		<type name="bigint" length="0"/>
+	</column>
+	<column name="fecha_desde" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="fecha_hasta">
+		<type name="date" length="0"/>
+	</column>
+	<column name="ddu_estatus" not-null="true" default-value="'NS'">
+		<type name="varchar" length="2"/>
+		<comment><![CDATA[NS - Not Started; S - Started; C - Completed]]></comment>
+	</column>
+	<column name="ddu_fecha_finalizado">
+		<type name="date" length="0"/>
+	</column>
+	<constraint name="PROFES_PK" type="pk-constr" table="said.&quot;PROFESORES&quot;">
+		<columns names="id_persona,fecha_desde" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="PROFESORES_MATERIAS" layers="0" alias="PROFESMAT" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="640" y="660"/>
+	<column name="id_persona" not-null="true">
+		<type name="bigint" length="0"/>
+	</column>
+	<column name="cod_materia" not-null="true">
+		<type name="varchar" length="7"/>
+	</column>
+	<column name="fecha_desde" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="fecha_hasta">
+		<type name="date" length="0"/>
+	</column>
+	<constraint name="PROFESMAT_PK" type="pk-constr" table="said.&quot;PROFESORES_MATERIAS&quot;">
+		<columns names="id_persona,cod_materia,fecha_desde" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="PROFESORES_CURSOS" layers="0" alias="PROFESCURS" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="400" y="960"/>
+	<column name="id_persona" not-null="true">
+		<type name="bigint" length="0"/>
+	</column>
+	<column name="id_curso" not-null="true">
+		<type name="bigint" length="0"/>
+	</column>
+	<constraint name="PROFESCURS_PK" type="pk-constr" table="said.&quot;PROFESORES_CURSOS&quot;">
+		<columns names="id_persona,id_curso" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="DEPARTAMENTOS" layers="0" alias="DEPTOS" collapse-mode="2" max-obj-count="2" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<comment><![CDATA[El coordinador del departamento tiene que ser un profesor.]]></comment>
+	<position x="1060" y="360"/>
+	<column name="id_depto" not-null="true">
+		<type name="smallserial" length="0"/>
+	</column>
+	<column name="nombre" not-null="true">
+		<type name="varchar" length="30"/>
+	</column>
+	<constraint name="DEPTOS_PK" type="pk-constr" table="said.&quot;DEPARTAMENTOS&quot;">
+		<columns names="id_depto" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="COORDINADORES_DEPARTAMENTOS" layers="0" alias="COORDSDEPTOS" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1360" y="300"/>
+	<column name="id_depto" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="id_persona" not-null="true">
+		<type name="bigint" length="0"/>
+	</column>
+	<column name="fecha_desde" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="fecha_hasta">
+		<type name="date" length="0"/>
+	</column>
+	<constraint name="COORDSDEPTOS_PK" type="pk-constr" table="said.&quot;COORDINADORES_DEPARTAMENTOS&quot;">
+		<columns names="id_depto,id_persona,fecha_desde" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="MATERIAS_DEPARTAMENTOS" layers="0" alias="MATDEPTOS" collapse-mode="2" max-obj-count="4" z-value="0">
+	<schema name="said"/>
+	<role name="postgres"/>
+	<position x="1082.35" y="630.588"/>
+	<column name="cod_materia" not-null="true">
+		<type name="varchar" length="7"/>
+	</column>
+	<column name="id_depto" not-null="true">
+		<type name="smallint" length="0"/>
+	</column>
+	<column name="fecha_desde" not-null="true">
+		<type name="date" length="0"/>
+	</column>
+	<column name="fecha_hasta">
+		<type name="date" length="0"/>
+	</column>
+	<constraint name="MATDEPTOS_PK" type="pk-constr" table="said.&quot;MATERIAS_DEPARTAMENTOS&quot;">
+		<columns names="cod_materia,id_depto,fecha_desde" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<constraint name="DOCSPERS__PERS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;PERSONAS&quot;" table="said.&quot;DOCUMENTOS_PERSONAS&quot;">
+	<columns names="id_pers" ref-type="src-columns"/>
+	<columns names="id_persona" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="CURSOS__MATERIAS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;MATERIAS&quot;" table="said.&quot;CURSOS&quot;">
+	<columns names="cod_materia" ref-type="src-columns"/>
+	<columns names="cod_materia" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="PLANEST__MATERIAS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;MATERIAS&quot;" table="said.&quot;PLANES_ESTUDIO&quot;">
+	<columns names="cod_materia" ref-type="src-columns"/>
+	<columns names="cod_materia" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="PLANEST__CARRERAS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;CARRERAS&quot;" table="said.&quot;PLANES_ESTUDIO&quot;">
+	<columns names="id_carrera" ref-type="src-columns"/>
+	<columns names="id_carrera" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="CURSCARR__CURSOS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;CURSOS&quot;" table="said.&quot;CURSOS_CARRERAS&quot;">
+	<columns names="id_curso" ref-type="src-columns"/>
+	<columns names="id_curso" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="CURSCARR__CARRERAS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;CARRERAS&quot;" table="said.&quot;CURSOS_CARRERAS&quot;">
+	<columns names="id_carrera" ref-type="src-columns"/>
+	<columns names="id_carrera" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="PROFES__PERS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;PERSONAS&quot;" table="said.&quot;PROFESORES&quot;">
+	<columns names="id_persona" ref-type="src-columns"/>
+	<columns names="id_persona" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="PROFESMAT___PROFES_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;PROFESORES&quot;" table="said.&quot;PROFESORES_MATERIAS&quot;">
+	<columns names="id_persona" ref-type="src-columns"/>
+	<columns names="id_persona" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="PROFESMAT__MATERIAS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;MATERIAS&quot;" table="said.&quot;PROFESORES_MATERIAS&quot;">
+	<columns names="cod_materia" ref-type="src-columns"/>
+	<columns names="cod_materia" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="PROFESCURS__PROFES_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;PROFESORES&quot;" table="said.&quot;PROFESORES_CURSOS&quot;">
+	<columns names="id_persona" ref-type="src-columns"/>
+	<columns names="id_persona" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="PROFESCURS__CURSOS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;CURSOS&quot;" table="said.&quot;PROFESORES_CURSOS&quot;">
+	<columns names="id_curso" ref-type="src-columns"/>
+	<columns names="id_curso" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="COORDSDEPTOS__PERS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;PERSONAS&quot;" table="said.&quot;COORDINADORES_DEPARTAMENTOS&quot;">
+	<columns names="id_persona" ref-type="src-columns"/>
+	<columns names="id_persona" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="COORDSDEPTOS__DEPTOS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;DEPARTAMENTOS&quot;" table="said.&quot;COORDINADORES_DEPARTAMENTOS&quot;">
+	<columns names="id_depto" ref-type="src-columns"/>
+	<columns names="id_depto" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="MATDEPTOS__MAT_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;MATERIAS&quot;" table="said.&quot;MATERIAS_DEPARTAMENTOS&quot;">
+	<columns names="cod_materia" ref-type="src-columns"/>
+	<columns names="cod_materia" ref-type="dst-columns"/>
+</constraint>
+
+<constraint name="MATDEPTOS__DEPTOS_FK" type="fk-constr" comparison-type="MATCH SIMPLE"
+	 upd-action="NO ACTION" del-action="NO ACTION" ref-table="said.&quot;DEPARTAMENTOS&quot;" table="said.&quot;MATERIAS_DEPARTAMENTOS&quot;">
+	<columns names="id_depto" ref-type="src-columns"/>
+	<columns names="id_depto" ref-type="dst-columns"/>
+</constraint>
+
+<relationship name="&quot;rel_documentos_personas_PERSONAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;DOCUMENTOS_PERSONAS&quot;"
+	 dst-table="said.&quot;PERSONAS&quot;" reference-fk="DOCSPERS__PERS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_CURSOS_MATERIAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;CURSOS&quot;"
+	 dst-table="said.&quot;MATERIAS&quot;" reference-fk="CURSOS__MATERIAS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_PLANES_ESTUDIO_MATERIAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;PLANES_ESTUDIO&quot;"
+	 dst-table="said.&quot;MATERIAS&quot;" reference-fk="PLANEST__MATERIAS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_PLANES_ESTUDIO_CARRERAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;PLANES_ESTUDIO&quot;"
+	 dst-table="said.&quot;CARRERAS&quot;" reference-fk="PLANEST__CARRERAS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_CURSOS_CARRERAS_CURSOS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;CURSOS_CARRERAS&quot;"
+	 dst-table="said.&quot;CURSOS&quot;" reference-fk="CURSCARR__CURSOS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_CURSOS_CARRERAS_CARRERAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;CURSOS_CARRERAS&quot;"
+	 dst-table="said.&quot;CARRERAS&quot;" reference-fk="CURSCARR__CARRERAS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_PROFESORES_PERSONAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;PROFESORES&quot;"
+	 dst-table="said.&quot;PERSONAS&quot;" reference-fk="PROFES__PERS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_PROFESORES_MATERIAS_MATERIAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;PROFESORES_MATERIAS&quot;"
+	 dst-table="said.&quot;MATERIAS&quot;" reference-fk="PROFESMAT__MATERIAS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_PROFESORES_MATERIAS_PROFESORES&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;PROFESORES_MATERIAS&quot;"
+	 dst-table="said.&quot;PROFESORES&quot;" reference-fk="PROFESMAT___PROFES_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_PROFESORES_CURSOS_PROFESORES&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;PROFESORES_CURSOS&quot;"
+	 dst-table="said.&quot;PROFESORES&quot;" reference-fk="PROFESCURS__PROFES_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_PROFESORES_CURSOS_CURSOS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;PROFESORES_CURSOS&quot;"
+	 dst-table="said.&quot;CURSOS&quot;" reference-fk="PROFESCURS__CURSOS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_COORDINADORES_DEPARTAMENTOS_PERSONAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;COORDINADORES_DEPARTAMENTOS&quot;"
+	 dst-table="said.&quot;PERSONAS&quot;" reference-fk="COORDSDEPTOS__PERS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_COORDINADORES_DEPARTAMENTOS_DEPARTAMENTOS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;COORDINADORES_DEPARTAMENTOS&quot;"
+	 dst-table="said.&quot;DEPARTAMENTOS&quot;" reference-fk="COORDSDEPTOS__DEPTOS_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_MATERIAS_DEPARTAMENTOS_MATERIAS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;MATERIAS_DEPARTAMENTOS&quot;"
+	 dst-table="said.&quot;MATERIAS&quot;" reference-fk="MATDEPTOS__MAT_FK"
+	 src-required="false" dst-required="true"/>
+
+<relationship name="&quot;rel_MATERIAS_DEPARTAMENTOS_DEPARTAMENTOS&quot;" type="relfk" layers="0"
+	 src-table="said.&quot;MATERIAS_DEPARTAMENTOS&quot;"
+	 dst-table="said.&quot;DEPARTAMENTOS&quot;" reference-fk="MATDEPTOS__DEPTOS_FK"
+	 src-required="false" dst-required="true"/>
+
+</dbmodel>
