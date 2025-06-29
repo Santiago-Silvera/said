@@ -1,0 +1,67 @@
+services:
+  backend:
+    container_name: said-backend-dev
+    build:
+      context: ./backend
+      target: development
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./.env
+    environment:
+      FLASK_APP: said.py
+      FLASK_ENV: development
+      FLASK_DEBUG: "1"
+      APP_ENV: development
+      POSTGRES_HOST: postgres  # Connect to postgres container
+    networks:
+      - said-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    container_name: said-frontend-dev
+    build:
+      context: ./frontend
+      target: development
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: development
+    networks:
+      - said-network
+    
+  postgres:
+    image: postgres:15-alpine
+    container_name: said-postgres-dev
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-said}
+      POSTGRES_USER: ${POSTGRES_USER:-saiduser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"  # Only accessible from localhost
+    networks:
+      - said-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-saiduser} -d ${POSTGRES_DB:-said}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  said-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+

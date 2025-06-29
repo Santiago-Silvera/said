@@ -1,0 +1,64 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: said-backend-prod
+    restart: unless-stopped
+    environment:
+      FLASK_ENV: production
+      APP_ENV: production
+      FLASK_DEBUG: "0"
+      POSTGRES_DB: ${POSTGRES_DB:-said}
+      POSTGRES_USER: ${POSTGRES_USER:-saiduser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres  # Connect to postgres container
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    ports:
+      - "127.0.0.1:5000:5000"  # Only accessible from localhost, nginx will proxy
+    networks:
+      - said-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    container_name: said-frontend-prod
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:80:80"  # Only accessible from localhost, nginx will proxy
+    networks:
+      - said-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: said-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-said}
+      POSTGRES_USER: ${POSTGRES_USER:-saiduser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"  # Only accessible from localhost
+    networks:
+      - said-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-saiduser} -d ${POSTGRES_DB:-said}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  said-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
